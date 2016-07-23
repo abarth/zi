@@ -16,7 +16,42 @@
 #include <string.h>
 #include <unistd.h>
 
+#define ESC "\x1B"
+
+namespace term {
+
+template <size_t n>
+void Put(const char (&message)[n]) {
+  write(STDOUT_FILENO, message, n);
+}
+
+void SaveScreen() {
+  Put(ESC "[?47h");
+}
+
+void RestoreScreen() {
+  Put(ESC "[?47l");
+}
+
+void ClearScreen() {
+  Put(ESC "[2J");
+}
+
+}  // namespace
+
+void Run() {
+  for (;;) {
+    int c = getchar();
+    if (c == 'q')
+      return;
+  }
+}
+
 int main(int, char**) {
-  write(STDOUT_FILENO, "hello, world\n", strlen("hello, world\n"));
+  term::SaveScreen();
+  term::ClearScreen();
+  term::Put("hello, world\n");
+  Run();
+  term::RestoreScreen();
   return 0;
 }
