@@ -51,17 +51,46 @@ size_t rows = 0;
 
 }  // namespace
 
+constexpr char kBell[] = "\x07";
+constexpr char kBackspace[] = "\x08";
+
+constexpr char kReset[] = ESC "c";
+constexpr char kEnableLineWrap[] = ESC "[7h";
+constexpr char kDisableLineWrap[] = ESC "[7l";
+
 constexpr char kSaveScreen[] = ESC "[?47h";
 constexpr char kRestoreScreen[] = ESC "[?47l";
-constexpr char kEraseScreen[] = ESC "[2J";
+
 constexpr char kEraseToEndOfLine[] = ESC "[K";
+constexpr char kEraseToStartOfLine[] = ESC "[1K";
+constexpr char kEraseLine[] = ESC "[2K";
+
+constexpr char kEraseToEndOfColumn[] = ESC "[J";
+constexpr char kEraseToStartOfColumn[] = ESC "[1J";
+constexpr char kEraseScreen[] = ESC "[2J";
+
 constexpr char kMoveCursorHome[] = ESC "[H";
+constexpr char kSaveCursorPosition[] = ESC "[s";
+constexpr char kRestoreCursorPosition[] = ESC "[u";
+constexpr char kHideCursor[] = ESC "[?25l";
+constexpr char kShowCursor[] = ESC "[?25h";
+constexpr char kMoveCursorUp[] = ESC "[A";
+constexpr char kMoveCursorDown[] = ESC "[B";
+constexpr char kMoveCursorRight[] = ESC "[C";
+constexpr char kMoveCursorLeft[] = ESC "[D";
+
+constexpr char kEnableScrolling[] = ESC "[r";
+constexpr char kScrollUp[] = ESC "D";
+constexpr char kScrollDown[] = ESC "M";
+
 constexpr char kClearCharacterAttributes[] = ESC "[0m";
-// constexpr char kSetBold[] = ESC "[1m";
+constexpr char kSetBold[] = ESC "[1m";
 constexpr char kSetLowIntensity[] = ESC "[2m";
-// constexpr char kSetUnderline[] = ESC "[4m";
-// constexpr char kSetReverseVideo[] = ESC "[7m";
-// constexpr char kSetInvisibleText[] = ESC "[8m";
+constexpr char kSetStandout[] = ESC "[3m";
+constexpr char kSetUnderline[] = ESC "[4m";
+constexpr char kSetBlink[] = ESC "[5m";
+constexpr char kSetReverseVideo[] = ESC "[7m";
+constexpr char kSetInvisibleText[] = ESC "[8m";
 
 enum class Color { Black, Red, Green, Yellow, Blue, Magenta, Cyan, White };
 
@@ -168,6 +197,8 @@ class CommandBuffer {
 
   void Write(const char* buffer, size_t length);
   void MoveCursorTo(int x, int y);
+  void SetForegroundColor(term::Color color);
+  void SetBackgroundColor(term::Color color);
   void Execute();
 
  private:
@@ -186,6 +217,14 @@ void CommandBuffer::Write(const char* buffer, size_t length) {
 
 void CommandBuffer::MoveCursorTo(int x, int y) {
   stream_ << ESC "[" << y + 1 << ";" << x + 1 << "H";
+}
+
+void CommandBuffer::SetForegroundColor(term::Color color) {
+  stream_ << ESC "[" << term::kForegroundColors[static_cast<int>(color)] << "m";
+}
+
+void CommandBuffer::SetBackgroundColor(term::Color color) {
+  stream_ << ESC "[" << term::kBackgroundColors[static_cast<int>(color)] << "m";
 }
 
 void CommandBuffer::Execute() {
