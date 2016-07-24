@@ -12,15 +12,32 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 
+#include <algorithm>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
+#include <vector>
+
+#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
+  TypeName(const TypeName&) = delete;      \
+  void operator=(const TypeName&) = delete
+
+#define HANDLE_EINTR(x)                                     \
+  ({                                                        \
+    decltype(x) eintr_wrapper_result;                       \
+    do {                                                    \
+      eintr_wrapper_result = (x);                           \
+    } while (eintr_wrapper_result == -1 && errno == EINTR); \
+    eintr_wrapper_result;                                   \
+  })
 
 #define ESC "\x1B"
 
@@ -29,8 +46,8 @@ namespace {
 
 struct termios g_original_termios;
 
-int cols = 0;
-int rows = 0;
+size_t cols = 0;
+size_t rows = 0;
 
 }  // namespace
 
@@ -38,9 +55,10 @@ constexpr char kSaveScreen[] = ESC "[?47h";
 constexpr char kRestoreScreen[] = ESC "[?47l";
 constexpr char kEraseScreen[] = ESC "[2J";
 constexpr char kEraseToEndOfLine[] = ESC "[K";
-// constexpr char kClearCharacterAttributes[] = ESC "[0m";
+constexpr char kMoveCursorHome[] = ESC "[H";
+constexpr char kClearCharacterAttributes[] = ESC "[0m";
 // constexpr char kSetBold[] = ESC "[1m";
-// constexpr char kSetLowIntensity[] = ESC "[2m";
+constexpr char kSetLowIntensity[] = ESC "[2m";
 // constexpr char kSetUnderline[] = ESC "[4m";
 // constexpr char kSetReverseVideo[] = ESC "[7m";
 // constexpr char kSetInvisibleText[] = ESC "[8m";
@@ -71,8 +89,8 @@ bool GetSize() {
     fprintf(stderr, "error: Unable to get terminal size.\n");
     return false;
   }
-  cols = screen_size.ws_col;
-  rows = screen_size.ws_row;
+  cols = static_cast<size_t>(screen_size.ws_col);
+  rows = static_cast<size_t>(screen_size.ws_row);
   return true;
 }
 
@@ -116,33 +134,140 @@ bool Init() {
 
 namespace zi {
 
+class ScopedFD {
+ public:
+  explicit ScopedFD(int fd);
+  ~ScopedFD();
+
+  bool is_valid() const { return fd_ != -1; }
+  int get() const { return fd_; }
+
+ private:
+  int fd_;
+
+  DISALLOW_COPY_AND_ASSIGN(ScopedFD);
+};
+
+ScopedFD::ScopedFD(int fd) : fd_(fd) {}
+
+ScopedFD::~ScopedFD() {
+  if (is_valid())
+    close(fd_);
+}
+
 class CommandBuffer {
  public:
+  CommandBuffer();
+  ~CommandBuffer();
+
   template <typename T>
   CommandBuffer& operator<<(T&& value) {
     stream_ << value;
     return *this;
   }
 
+  void Write(const char* buffer, size_t length);
   void MoveCursorTo(int x, int y);
   void Execute();
 
  private:
   std::ostringstream stream_;
+
+  DISALLOW_COPY_AND_ASSIGN(CommandBuffer);
 };
 
+CommandBuffer::CommandBuffer() {}
+
+CommandBuffer::~CommandBuffer() {}
+
+void CommandBuffer::Write(const char* buffer, size_t length) {
+  stream_.write(buffer, length);
+}
+
 void CommandBuffer::MoveCursorTo(int x, int y) {
-  stream_ << ESC "[" << y << ";" << x << "H";
+  stream_ << ESC "[" << y + 1 << ";" << x + 1 << "H";
 }
 
 void CommandBuffer::Execute() {
   term::Put(stream_.str());
 }
 
+class File {
+ public:
+  File();
+  ~File();
+
+  void Clear();
+  void Read(const std::string& path);
+
+  void Display(CommandBuffer* commands, int line_index);
+
+  size_t line_count() const { return lines_.size(); }
+
+ private:
+  std::vector<std::string> lines_;
+  bool has_terminating_newline_ = true;
+
+  DISALLOW_COPY_AND_ASSIGN(File);
+};
+
+File::File() {}
+
+File::~File() {}
+
+void File::Clear() {
+  lines_.clear();
+  has_terminating_newline_ = true;
+}
+
+void File::Read(const std::string& path) {
+  Clear();
+  ScopedFD fd(HANDLE_EINTR(open(path.c_str(), O_RDONLY)));
+  // TODO(abarth): Add an error reporting mechanism.
+  if (!fd.is_valid())
+    return;
+  std::string current_line;
+  constexpr size_t kBufferSize = 1 << 16;
+  char buffer[kBufferSize];
+  for (;;) {
+    int count = HANDLE_EINTR(read(fd.get(), buffer, kBufferSize));
+    if (count == -1)
+      return;
+    if (count == 0)
+      break;
+    const char* pos = buffer;
+    const char* end = pos + count;
+    while (pos != end) {
+      const char* newline = std::find(pos, end, '\n');
+      if (!newline)
+        break;
+      current_line.append(pos, newline);
+      lines_.push_back(std::move(current_line));
+      current_line.clear();
+      pos = newline + 1;
+    }
+    current_line.append(pos, end);
+  }
+  if (!current_line.empty()) {
+    has_terminating_newline_ = false;
+    lines_.push_back(std::move(current_line));
+  }
+}
+
+void File::Display(CommandBuffer* commands, int line_index) {
+  const std::string& line = lines_[line_index];
+  // TODO(abarth): What if we don't want to fill the entire terminal?
+  size_t count = std::min(line.size(), term::cols);
+  commands->Write(line.data(), count);
+  *commands << term::kEraseToEndOfLine;
+}
+
 class Shell {
  public:
   Shell();
   ~Shell();
+
+  void OpenFile(const std::string& path);
 
   int Run();
 
@@ -152,6 +277,10 @@ class Shell {
   void Display();
 
   std::string status_;
+  std::vector<std::unique_ptr<File>> files_;
+  size_t current_file_ = 0;
+
+  DISALLOW_COPY_AND_ASSIGN(Shell);
 };
 
 Shell::Shell() {
@@ -162,12 +291,11 @@ Shell::~Shell() {
   term::Put(term::kRestoreScreen);
 }
 
-void Shell::Display() {
-  CommandBuffer commands;
-  commands << term::kEraseScreen;
-  commands.MoveCursorTo(1, term::rows);
-  commands << status_ << term::kEraseToEndOfLine;
-  commands.Execute();
+void Shell::OpenFile(const std::string& path) {
+  std::unique_ptr<File> file(new File());
+  file->Read(path);
+  current_file_ = files_.size();
+  files_.push_back(std::move(file));
 }
 
 int Shell::Run() {
@@ -186,12 +314,37 @@ int Shell::Run() {
   return 0;
 }
 
+void Shell::Display() {
+  CommandBuffer commands;
+  commands << term::kEraseScreen << term::kMoveCursorHome;
+  if (!files_.empty()) {
+    auto& file = files_[current_file_];
+    for (size_t i = 0; i < term::rows - 1; ++i) {
+      commands.MoveCursorTo(0, i);
+      if (i < file->line_count())
+        file->Display(&commands, i);
+      else
+        commands << term::kSetLowIntensity << "~"
+                 << term::kClearCharacterAttributes << term::kEraseToEndOfLine;
+    }
+  }
+  commands.MoveCursorTo(0, term::rows - 1);
+  commands << status_ << term::kEraseToEndOfLine;
+  commands.Execute();
+}
+
 }  // namespace zi
 
-int main(int, char**) {
+int main(int argc, char** argv) {
   if (!term::Init())
     return 1;
   zi::Shell shell;
-  shell.set_status("Hello, world.");
+  if (argc > 1) {
+    std::string file_name = argv[1];
+    shell.OpenFile(file_name);
+    shell.set_status(std::move(file_name));
+  } else {
+    shell.set_status("No file.");
+  }
   return shell.Run();
 }
