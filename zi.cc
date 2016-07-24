@@ -70,8 +70,8 @@ constexpr char kEraseToStartOfColumn[] = ESC "[1J";
 constexpr char kEraseScreen[] = ESC "[2J";
 
 constexpr char kMoveCursorHome[] = ESC "[H";
-constexpr char kSaveCursorPosition[] = ESC "[s";
-constexpr char kRestoreCursorPosition[] = ESC "[u";
+constexpr char kSaveCursorPosition[] = ESC "7";
+constexpr char kRestoreCursorPosition[] = ESC "8";
 constexpr char kHideCursor[] = ESC "[?25l";
 constexpr char kShowCursor[] = ESC "[?25h";
 constexpr char kMoveCursorUp[] = ESC "[A";
@@ -324,6 +324,7 @@ class Shell {
 
 Shell::Shell() {
   term::Put(term::kSaveScreen);
+  term::Put(term::kMoveCursorHome);
 }
 
 Shell::~Shell() {
@@ -346,8 +347,24 @@ int Shell::Run() {
       return 1;
     if (count == 0)
       continue;
-    if (c == 'q')
-      return 0;
+    switch (c) {
+      case 'q':
+        return 0;
+      case 'h':
+        term::Put(term::kMoveCursorLeft);
+        continue;
+      case 'j':
+        term::Put(term::kMoveCursorDown);
+        continue;
+      case 'k':
+        term::Put(term::kMoveCursorUp);
+        continue;
+      case 'l':
+        term::Put(term::kMoveCursorRight);
+        continue;
+      default:
+        status_ = c;
+    }
     Display();
   }
   return 0;
@@ -355,7 +372,8 @@ int Shell::Run() {
 
 void Shell::Display() {
   CommandBuffer commands;
-  commands << term::kEraseScreen << term::kMoveCursorHome;
+  commands << term::kSaveCursorPosition << term::kEraseScreen
+           << term::kMoveCursorHome;
   if (!files_.empty()) {
     auto& file = files_[current_file_];
     for (size_t i = 0; i < term::rows - 1; ++i) {
@@ -368,7 +386,8 @@ void Shell::Display() {
     }
   }
   commands.MoveCursorTo(0, term::rows - 1);
-  commands << status_ << term::kEraseToEndOfLine;
+  commands << status_ << term::kEraseToEndOfLine
+           << term::kRestoreCursorPosition;
   commands.Execute();
 }
 
