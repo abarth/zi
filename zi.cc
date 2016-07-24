@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 #include <unistd.h>
 
 #include <sstream>
@@ -25,6 +26,8 @@
 
 namespace term {
 namespace {
+
+struct termios g_original_termios;
 
 int cols = 0;
 int rows = 0;
@@ -42,6 +45,16 @@ constexpr char kEraseToEndOfLine[] = ESC "[K";
 // constexpr char kSetReverseVideo[] = ESC "[7m";
 // constexpr char kSetInvisibleText[] = ESC "[8m";
 
+enum class Color { Black, Red, Green, Yellow, Blue, Magenta, Cyan, White };
+
+const char* kForegroundColors[] = {
+    "30", "31", "32", "33", "34", "35", "36", "37",
+};
+
+const char* kBackgroundColors[] = {
+    "40", "41", "42", "43", "44", "45", "46", "47",
+};
+
 template <size_t n>
 void Put(const char (&message)[n]) {
   write(STDOUT_FILENO, message, n);
@@ -54,24 +67,52 @@ void Put(const std::string& message) {
 bool GetSize() {
   struct winsize screen_size;
   int result = ioctl(STDIN_FILENO, TIOCGWINSZ, &screen_size);
-  if (result == -1)
+  if (result == -1) {
+    fprintf(stderr, "error: Unable to get terminal size.\n");
     return false;
+  }
   cols = screen_size.ws_col;
   rows = screen_size.ws_row;
   return true;
 }
 
-enum class Color { Black, Red, Green, Yellow, Blue, Magenta, Cyan, White };
+void RestoreOriginalTermios() {
+  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &g_original_termios) == -1)
+    fprintf(stderr, "error: Failed to restore original terminal attributes.\n");
+}
 
-const char* kForegroundColors[] = {
-    "30", "31", "32", "33", "34", "35", "36", "37",
-};
+bool EnableRaw() {
+  if (!isatty(STDIN_FILENO)) {
+    fprintf(stderr, "error: stdin is not a tty.\n");
+    return false;
+  }
+  if (tcgetattr(STDIN_FILENO, &g_original_termios) == -1) {
+    fprintf(stderr, "error: Cannot get terminal attributes.\n");
+    return false;
+  }
+  if (atexit(RestoreOriginalTermios) != 0) {
+    fprintf(stderr, "error: Cannot register cleaup handler.\n");
+    return false;
+  }
+  struct termios raw = g_original_termios;
+  raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+  raw.c_oflag &= ~(OPOST);
+  raw.c_cflag |= (CS8);
+  raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+  raw.c_cc[VMIN] = 0;
+  raw.c_cc[VTIME] = 1;
+  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) {
+    fprintf(stderr, "error: Cannot enable raw terminal input.\n");
+    return false;
+  }
+  return true;
+}
 
-const char* kBackgroundColors[] = {
-    "40", "41", "42", "43", "44", "45", "46", "47",
-};
+bool Init() {
+  return term::GetSize() && term::EnableRaw();
+}
 
-}  // namespace
+}  // namespace term
 
 namespace zi {
 
@@ -100,44 +141,57 @@ void CommandBuffer::Execute() {
 
 class Shell {
  public:
+  Shell();
+  ~Shell();
+
+  int Run();
+
   void set_status(std::string status) { status_ = std::move(status); }
 
-  void Display();
-  void Run();
-
  private:
+  void Display();
+
   std::string status_;
 };
+
+Shell::Shell() {
+  term::Put(term::kSaveScreen);
+}
+
+Shell::~Shell() {
+  term::Put(term::kRestoreScreen);
+}
 
 void Shell::Display() {
   CommandBuffer commands;
   commands << term::kEraseScreen;
-  commands.MoveCursorTo(0, term::rows - 1);
+  commands.MoveCursorTo(1, term::rows);
   commands << status_ << term::kEraseToEndOfLine;
   commands.Execute();
 }
 
-void Shell::Run() {
+int Shell::Run() {
+  Display();
   for (;;) {
-    Display();
-
-    int c = getchar();
+    char c = '\0';
+    int count = read(STDIN_FILENO, &c, 1);
+    if (count == -1)
+      return 1;
+    if (count == 0)
+      continue;
     if (c == 'q')
-      return;
+      return 0;
+    Display();
   }
+  return 0;
 }
 
-}  // zi
+}  // namespace zi
 
 int main(int, char**) {
-  if (!term::GetSize()) {
-    fprintf(stderr, "error: Unable to get terminal size.\n");
+  if (!term::Init())
     return 1;
-  }
-  term::Put(term::kSaveScreen);
   zi::Shell shell;
   shell.set_status("Hello, world.");
-  shell.Run();
-  term::Put(term::kRestoreScreen);
-  return 0;
+  return shell.Run();
 }
