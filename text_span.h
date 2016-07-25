@@ -14,28 +14,50 @@
 
 #pragma once
 
-#include <string>
+#include <stddef.h>
+
+#include "macros.h"
 
 namespace zi {
 
-class StringView {
+class TextSpan {
  public:
-  StringView();
-  StringView(const std::string& string);
-  StringView(const char* begin, const char* end);
-  ~StringView();
+  TextSpan();
+  TextSpan(size_t begin, size_t end);
+  ~TextSpan();
 
-  const char* begin() const { return begin_; }
-  const char* end() const { return end_; }
+  void MarkDirty();
 
-  const char* data() const { return begin_; }
+  void PushFront(size_t count);
+  void PushBack(size_t count);
+
+  void PopFront(size_t count);
+  void PopBack(size_t count);
+
+  void ShiftForward(size_t count);
+  void ShiftBackward(size_t count);
+
+  bool is_dirty() const { return is_dirty_; }
+
+  size_t begin() const { return begin_; }
+  size_t end() const { return end_; }
+
   size_t length() const { return end_ - begin_; }
 
-  bool is_empty() const { return begin_ == end_; }
+  struct DescendingByBegin {
+    bool operator()(const TextSpan* lhs, const TextSpan* rhs) const;
+  };
+
+  struct AscendingByEnd {
+    bool operator()(const TextSpan* lhs, const TextSpan* rhs) const;
+  };
 
  private:
-  const char* begin_ = nullptr;
-  const char* end_ = nullptr;
+  bool is_dirty_ = false;
+  size_t begin_ = 0;
+  size_t end_ = 0;
+
+  DISALLOW_COPY_AND_ASSIGN(TextSpan);
 };
 
 }  // namespace zi

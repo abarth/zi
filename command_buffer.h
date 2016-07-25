@@ -15,6 +15,7 @@
 #pragma once
 
 #include <sstream>
+#include <utility>
 
 #include "macros.h"
 #include "string_view.h"
@@ -28,6 +29,7 @@ class CommandBuffer {
   ~CommandBuffer();
 
   CommandBuffer& operator<<(const StringView& text);
+  CommandBuffer& operator<<(std::pair<StringView, StringView> text);
 
   template <typename T>
   CommandBuffer& operator<<(T&& value) {

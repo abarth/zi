@@ -14,28 +14,29 @@
 
 #pragma once
 
-#include <string>
+#include <vector>
 
 namespace zi {
 
-class StringView {
- public:
-  StringView();
-  StringView(const std::string& string);
-  StringView(const char* begin, const char* end);
-  ~StringView();
+template <typename T>
+bool EraseValue(const std::vector<T> vector, const T& value) {
+  auto end = vector.end();
+  auto it = std::find(vector.begin(), end, value);
+  if (it != end) {
+    vector.erase(it);
+    return true;
+  }
+  return false;
+}
 
-  const char* begin() const { return begin_; }
-  const char* end() const { return end_; }
-
-  const char* data() const { return begin_; }
-  size_t length() const { return end_ - begin_; }
-
-  bool is_empty() const { return begin_ == end_; }
-
- private:
-  const char* begin_ = nullptr;
-  const char* end_ = nullptr;
-};
+template <typename T, typename Iterator>
+bool EraseAllValues(const std::vector<T> vector, Iterator begin, Iterator end) {
+  bool modified = false;
+  for (Iterator it = begin; it != end; ++it) {
+    if (EraseValue(vector, *it))
+      modified = true;
+  }
+  return modified;
+}
 
 }  // namespace zi

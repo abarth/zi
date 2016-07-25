@@ -14,28 +14,44 @@
 
 #pragma once
 
-#include <string>
+#include <memory>
+#include <vector>
+
+#include "command_buffer.h"
+#include "macros.h"
+#include "text_span.h"
+#include "text_buffer.h"
 
 namespace zi {
 
-class StringView {
+class Viewport {
  public:
-  StringView();
-  StringView(const std::string& string);
-  StringView(const char* begin, const char* end);
-  ~StringView();
+  Viewport();
+  ~Viewport();
 
-  const char* begin() const { return begin_; }
-  const char* end() const { return end_; }
+  void SetText(std::unique_ptr<TextBuffer> text);
+  void Display(CommandBuffer* commands);
 
-  const char* data() const { return begin_; }
-  size_t length() const { return end_ - begin_; }
+  void Resize(size_t width, size_t height);
+  void ScrollTo(size_t first_line);
+  void ScrollBy(int delta);
 
-  bool is_empty() const { return begin_ == end_; }
+  TextBuffer* text() const { return text_.get(); }
+  size_t width() const { return width_; }
+  size_t height() const { return height_; }
+  size_t first_line() const { return first_line_; }
 
  private:
-  const char* begin_ = nullptr;
-  const char* end_ = nullptr;
+  void UpdateLines();
+
+  std::unique_ptr<TextBuffer> text_;
+  std::vector<std::unique_ptr<TextSpan>> lines_;
+
+  size_t width_ = 0;
+  size_t height_ = 0;
+  size_t first_line_ = 0;
+
+  DISALLOW_COPY_AND_ASSIGN(Viewport);
 };
 
 }  // namespace zi

@@ -17,24 +17,20 @@
 #include <string.h>
 
 #include <algorithm>
-#include <utility>
 
 namespace zi {
 
 TextBuffer::TextBuffer() {}
 
-TextBuffer::~TextBuffer() {}
+TextBuffer::TextBuffer(std::vector<char> text) : buffer_(std::move(text)) {}
 
-void TextBuffer::SetText(std::vector<char> text) {
-  buffer_ = std::move(text);
-  gap_begin_ = 0;
-  gap_end_ = 0;
-}
+TextBuffer::~TextBuffer() {}
 
 void TextBuffer::InsertCharacter(char c) {
   if (gap_begin_ == gap_end_)
     Expand(1);
   buffer_[gap_begin_++] = c;
+  DidInsert(1);
 }
 
 void TextBuffer::InsertText(std::string text) {
@@ -43,21 +39,29 @@ void TextBuffer::InsertText(std::string text) {
     Expand(length);
   memcpy(&buffer_[gap_begin_], text.data(), length);
   gap_begin_ += length;
+  DidInsert(length);
 }
 
 void TextBuffer::Backspace() {
-  if (gap_begin_ > 0)
+  if (gap_begin_ > 0) {
     --gap_begin_;
+    DidDelete(1);
+    DidMoveCursorBackward();
+  }
 }
 
 void TextBuffer::MoveCursorForward() {
-  if (gap_end_ < buffer_.size())
+  if (gap_end_ < buffer_.size()) {
     buffer_[gap_begin_++] = buffer_[gap_end_++];
+    DidMoveCursorForward();
+  }
 }
 
 void TextBuffer::MoveCursorBackward() {
-  if (gap_begin_ > 0)
+  if (gap_begin_ > 0) {
     buffer_[--gap_end_] = buffer_[--gap_begin_];
+    DidMoveCursorBackward();
+  }
 }
 
 void TextBuffer::MoveCursorBy(int offset) {
@@ -67,11 +71,13 @@ void TextBuffer::MoveCursorBy(int offset) {
     memcpy(&buffer_[gap_begin_], &buffer_[gap_end_], delta);
     gap_begin_ += delta;
     gap_end_ += delta;
+    DidMoveCursorForward();
   } else if (offset < 0) {
     size_t delta = std::min(static_cast<size_t>(-offset), gap_begin_);
     gap_begin_ -= delta;
     gap_end_ -= delta;
     memcpy(&buffer_[gap_end_], &buffer_[gap_begin_], delta);
+    DidMoveCursorBackward();
   }
 }
 
@@ -82,21 +88,109 @@ void TextBuffer::MoveCursorTo(size_t position) {
     MoveCursorBy(-static_cast<int>(cursor_position() - position));
 }
 
+size_t TextBuffer::Find(char c, size_t pos) {
+  if (pos < gap_begin_) {
+    char* ptr = static_cast<char*>(memchr(&buffer_[pos], c, gap_begin_ - pos));
+    if (ptr)
+      return ptr - data();
+    pos = gap_begin_;
+  }
+  pos += gap_size();
+  if (pos < buffer_.size()) {
+    char* ptr =
+        static_cast<char*>(memchr(&buffer_[pos], c, buffer_.size() - pos));
+    if (ptr)
+      return ptr - data() - gap_size();
+  }
+  return std::string::npos;
+}
+
+std::pair<StringView, StringView> TextBuffer::GetTextForSpan(
+    TextSpan* span) const {
+  if (span->end() <= gap_begin_) {
+    const char* begin = &buffer_[span->begin()];
+    return std::make_pair(StringView(begin, begin + span->length()),
+                          StringView());
+  } else if (span->begin() >= gap_end_) {
+    const char* begin = &buffer_[span->begin() + gap_size()];
+    // TODO(abarth): Should we handle the case where the span extends beyond the
+    // buffer?
+    return std::make_pair(StringView(begin, begin + span->length()),
+                          StringView());
+  } else {
+    // The span crosses the gap.
+    const char* first_begin = &buffer_[span->begin()];
+    const char* first_end = &buffer_[gap_begin_];
+    const size_t first_length = first_end - first_begin;
+    const char* second_begin = &buffer_[gap_end_];
+    const char* second_end = second_begin + (span->length() - first_length);
+    return std::make_pair(StringView(first_begin, first_end),
+                          StringView(second_begin, second_end));
+  }
+}
+
+void TextBuffer::AddSpan(TextSpan* span) {
+  if (span->end() < gap_begin_)
+    before_gap_.push(span);
+  else if (span->begin() >= gap_end_)
+    after_gap_.push(span);
+  else
+    across_gap_.push_back(span);
+}
+
 void TextBuffer::Expand(size_t required_gap_size) {
-  size_t existing_gap = gap_end_ - gap_begin_;
+  size_t existing_gap = gap_size();
   if (existing_gap >= required_gap_size)
     return;
   size_t min_size = buffer_.size() - existing_gap + required_gap_size;
-  std::vector<char> new_buffer(min_size * 1.5);
   size_t tail_size = buffer_.size() - gap_end_;
+  std::vector<char> new_buffer(min_size * 1.5 + 1);
   if (gap_begin_ > 0)
-    memcpy(&new_buffer[0], &buffer_[0], gap_begin_);
+    memcpy(&new_buffer[0], data(), gap_begin_);
   if (tail_size > 0) {
     memcpy(&new_buffer[new_buffer.size() - tail_size],
            &buffer_[buffer_.size() - tail_size], tail_size);
   }
   buffer_.swap(new_buffer);
   gap_end_ = buffer_.size() - tail_size;
+}
+
+void TextBuffer::DidInsert(size_t count) {
+  for (auto& span : across_gap_)
+    span->PushBack(count);
+  after_gap_.ShiftForward(count);
+}
+
+void TextBuffer::DidDelete(size_t count) {
+  for (auto& span : across_gap_)
+    span->PopBack(count);
+  after_gap_.ShiftBackward(count);
+}
+
+void TextBuffer::DidMoveCursorForward() {
+  std::vector<TextSpan*> displaced;
+  across_gap_.swap(displaced);
+  while (!after_gap_.empty() && after_gap_.top()->begin() < gap_end_) {
+    TextSpan* span = after_gap_.top();
+    after_gap_.pop();
+    displaced.push_back(span);
+  }
+  across_gap_.reserve(displaced.size());
+  for (auto& span : displaced)
+    AddSpan(span);
+}
+
+void TextBuffer::DidMoveCursorBackward() {
+  std::vector<TextSpan*> displaced;
+  across_gap_.swap(displaced);
+  while (!before_gap_.empty() && before_gap_.top()->end() >= gap_begin_) {
+    TextSpan* span = before_gap_.top();
+    before_gap_.pop();
+    displaced.push_back(span);
+  }
+  across_gap_.reserve(displaced.size());
+  for (auto& span : displaced)
+    AddSpan(span);
 }
 
 }  // namespace zi

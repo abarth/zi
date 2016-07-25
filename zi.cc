@@ -28,6 +28,7 @@
 #include "scoped_fd.h"
 #include "term.h"
 #include "text_buffer.h"
+#include "viewport.h"
 
 namespace zi {
 
@@ -83,7 +84,7 @@ class Shell {
 
   Mode mode_ = Mode::Vi;
   std::string status_;
-  TextBuffer text_;
+  Viewport viewport_;
 
   bool should_quit_ = false;
   bool needs_display_ = false;
@@ -94,6 +95,7 @@ class Shell {
 Shell::Shell() {
   term::Put(term::kSaveScreen);
   term::Put(term::kMoveCursorHome);
+  viewport_.Resize(term::cols, term::rows);
 }
 
 Shell::~Shell() {
@@ -101,7 +103,8 @@ Shell::~Shell() {
 }
 
 void Shell::OpenFile(const std::string& path) {
-  text_.SetText(ReadFile(path));
+  std::unique_ptr<TextBuffer> text(new TextBuffer(ReadFile(path)));
+  viewport_.SetText(std::move(text));
 }
 
 int Shell::Run() {
@@ -133,7 +136,7 @@ int Shell::Run() {
 void Shell::MoveCursorLeft() {
   term::Put(term::kMoveCursorLeft);
   // TODO(abarth): Handle RTL.
-  text_.MoveCursorBackward();
+  viewport_.text()->MoveCursorBackward();
 }
 
 void Shell::MoveCursorDown() {
@@ -149,22 +152,22 @@ void Shell::MoveCursorUp() {
 void Shell::MoveCursorRight() {
   term::Put(term::kMoveCursorRight);
   // TODO(abarth): Handle RTL.
-  text_.MoveCursorForward();
+  viewport_.text()->MoveCursorForward();
 }
 
 void Shell::HandleCharacterInViMode(char c) {
   switch (c) {
     case 'h':
-      term::Put(term::kMoveCursorLeft);
+      MoveCursorLeft();
       break;
     case 'j':
-      term::Put(term::kMoveCursorDown);
+      MoveCursorDown();
       break;
     case 'k':
-      term::Put(term::kMoveCursorUp);
+      MoveCursorUp();
       break;
     case 'l':
-      term::Put(term::kMoveCursorRight);
+      MoveCursorRight();
       break;
     case 'i':
       mode_ = Mode::Input;
@@ -205,7 +208,8 @@ void Shell::HandleCharacterInInputMode(char c) {
     mode_ = Mode::Vi;
     mark_needs_display();
   } else {
-    text_.InsertCharacter(c);
+    viewport_.text()->InsertCharacter(c);
+    term::Put(term::kMoveCursorRight);
     mark_needs_display();
   }
 }
@@ -219,6 +223,7 @@ void Shell::Display() {
   CommandBuffer commands;
   commands << term::kSaveCursorPosition << term::kEraseScreen
            << term::kMoveCursorHome;
+  viewport_.Display(&commands);
   commands.MoveCursorTo(0, term::rows - 1);
   commands << status_ << term::kEraseToEndOfLine
            << term::kRestoreCursorPosition;

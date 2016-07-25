@@ -16,10 +16,13 @@
 
 namespace zi {
 
+StringView::StringView() {}
+
 StringView::StringView(const std::string& string)
     : begin_(string.data()), end_(string.data() + string.length()) {}
 
-StringView::StringView(char* begin, char* end) : begin_(begin), end_(end) {}
+StringView::StringView(const char* begin, const char* end)
+    : begin_(begin), end_(end) {}
 
 StringView::~StringView() {}
 

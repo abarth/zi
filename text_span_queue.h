@@ -14,28 +14,33 @@
 
 #pragma once
 
-#include <string>
+#include <queue>
+#include <vector>
+
+#include "text_span.h"
+#include "vector_extensions.h"
 
 namespace zi {
 
-class StringView {
+template <class Compare>
+class TextSpanQueue
+    : public std::priority_queue<TextSpan*, std::vector<TextSpan*>, Compare> {
  public:
-  StringView();
-  StringView(const std::string& string);
-  StringView(const char* begin, const char* end);
-  ~StringView();
+  void ShiftForward(size_t count) {
+    for (auto& value : this->c)
+      value->ShiftForward(count);
+  }
 
-  const char* begin() const { return begin_; }
-  const char* end() const { return end_; }
+  void ShiftBackward(size_t count) {
+    for (auto& value : this->c)
+      value->ShiftBackward(count);
+  }
 
-  const char* data() const { return begin_; }
-  size_t length() const { return end_ - begin_; }
-
-  bool is_empty() const { return begin_ == end_; }
-
- private:
-  const char* begin_ = nullptr;
-  const char* end_ = nullptr;
+  template <typename Iterator>
+  void Erase(Iterator begin, Iterator end) {
+    if (EraseAllValues(this->c, begin, end))
+      std::make_heap(this->c.begin(), this->c.end(), this->comp);
+  }
 };
 
 }  // namespace zi
