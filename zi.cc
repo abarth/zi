@@ -15,221 +15,20 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <termios.h>
 #include <unistd.h>
 
 #include <algorithm>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 
-#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
-  TypeName(const TypeName&) = delete;      \
-  void operator=(const TypeName&) = delete
-
-#define HANDLE_EINTR(x)                                     \
-  ({                                                        \
-    decltype(x) eintr_wrapper_result;                       \
-    do {                                                    \
-      eintr_wrapper_result = (x);                           \
-    } while (eintr_wrapper_result == -1 && errno == EINTR); \
-    eintr_wrapper_result;                                   \
-  })
-
-#define ESC "\x1B"
-
-namespace term {
-namespace {
-
-struct termios g_original_termios;
-
-size_t cols = 0;
-size_t rows = 0;
-
-}  // namespace
-
-constexpr char kBell[] = "\x07";
-constexpr char kBackspace[] = "\x08";
-
-constexpr char kReset[] = ESC "c";
-constexpr char kEnableLineWrap[] = ESC "[7h";
-constexpr char kDisableLineWrap[] = ESC "[7l";
-
-constexpr char kSaveScreen[] = ESC "[?47h";
-constexpr char kRestoreScreen[] = ESC "[?47l";
-
-constexpr char kEraseToEndOfLine[] = ESC "[K";
-constexpr char kEraseToStartOfLine[] = ESC "[1K";
-constexpr char kEraseLine[] = ESC "[2K";
-
-constexpr char kEraseToEndOfColumn[] = ESC "[J";
-constexpr char kEraseToStartOfColumn[] = ESC "[1J";
-constexpr char kEraseScreen[] = ESC "[2J";
-
-constexpr char kMoveCursorHome[] = ESC "[H";
-constexpr char kSaveCursorPosition[] = ESC "7";
-constexpr char kRestoreCursorPosition[] = ESC "8";
-constexpr char kHideCursor[] = ESC "[?25l";
-constexpr char kShowCursor[] = ESC "[?25h";
-constexpr char kMoveCursorUp[] = ESC "[A";
-constexpr char kMoveCursorDown[] = ESC "[B";
-constexpr char kMoveCursorRight[] = ESC "[C";
-constexpr char kMoveCursorLeft[] = ESC "[D";
-
-constexpr char kEnableScrolling[] = ESC "[r";
-constexpr char kScrollUp[] = ESC "D";
-constexpr char kScrollDown[] = ESC "M";
-
-constexpr char kClearCharacterAttributes[] = ESC "[0m";
-constexpr char kSetBold[] = ESC "[1m";
-constexpr char kSetLowIntensity[] = ESC "[2m";
-constexpr char kSetStandout[] = ESC "[3m";
-constexpr char kSetUnderline[] = ESC "[4m";
-constexpr char kSetBlink[] = ESC "[5m";
-constexpr char kSetReverseVideo[] = ESC "[7m";
-constexpr char kSetInvisibleText[] = ESC "[8m";
-
-enum class Color { Black, Red, Green, Yellow, Blue, Magenta, Cyan, White };
-
-const char* kForegroundColors[] = {
-    "30", "31", "32", "33", "34", "35", "36", "37",
-};
-
-const char* kBackgroundColors[] = {
-    "40", "41", "42", "43", "44", "45", "46", "47",
-};
-
-template <size_t n>
-void Put(const char (&message)[n]) {
-  write(STDOUT_FILENO, message, n);
-}
-
-void Put(const std::string& message) {
-  write(STDOUT_FILENO, message.data(), message.size());
-}
-
-bool GetSize() {
-  struct winsize screen_size;
-  int result = ioctl(STDIN_FILENO, TIOCGWINSZ, &screen_size);
-  if (result == -1) {
-    fprintf(stderr, "error: Unable to get terminal size.\n");
-    return false;
-  }
-  cols = static_cast<size_t>(screen_size.ws_col);
-  rows = static_cast<size_t>(screen_size.ws_row);
-  return true;
-}
-
-void RestoreOriginalTermios() {
-  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &g_original_termios) == -1)
-    fprintf(stderr, "error: Failed to restore original terminal attributes.\n");
-}
-
-bool EnableRaw() {
-  if (!isatty(STDIN_FILENO)) {
-    fprintf(stderr, "error: stdin is not a tty.\n");
-    return false;
-  }
-  if (tcgetattr(STDIN_FILENO, &g_original_termios) == -1) {
-    fprintf(stderr, "error: Cannot get terminal attributes.\n");
-    return false;
-  }
-  if (atexit(RestoreOriginalTermios) != 0) {
-    fprintf(stderr, "error: Cannot register cleaup handler.\n");
-    return false;
-  }
-  struct termios raw = g_original_termios;
-  raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-  raw.c_oflag &= ~(OPOST);
-  raw.c_cflag |= (CS8);
-  raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-  raw.c_cc[VMIN] = 0;
-  raw.c_cc[VTIME] = 1;
-  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) {
-    fprintf(stderr, "error: Cannot enable raw terminal input.\n");
-    return false;
-  }
-  return true;
-}
-
-bool Init() {
-  return term::GetSize() && term::EnableRaw();
-}
-
-}  // namespace term
+#include "command_buffer.h"
+#include "macros.h"
+#include "scoped_fd.h"
+#include "term.h"
 
 namespace zi {
-
-class ScopedFD {
- public:
-  explicit ScopedFD(int fd);
-  ~ScopedFD();
-
-  bool is_valid() const { return fd_ != -1; }
-  int get() const { return fd_; }
-
- private:
-  int fd_;
-
-  DISALLOW_COPY_AND_ASSIGN(ScopedFD);
-};
-
-ScopedFD::ScopedFD(int fd) : fd_(fd) {}
-
-ScopedFD::~ScopedFD() {
-  if (is_valid())
-    close(fd_);
-}
-
-class CommandBuffer {
- public:
-  CommandBuffer();
-  ~CommandBuffer();
-
-  template <typename T>
-  CommandBuffer& operator<<(T&& value) {
-    stream_ << value;
-    return *this;
-  }
-
-  void Write(const char* buffer, size_t length);
-  void MoveCursorTo(int x, int y);
-  void SetForegroundColor(term::Color color);
-  void SetBackgroundColor(term::Color color);
-  void Execute();
-
- private:
-  std::ostringstream stream_;
-
-  DISALLOW_COPY_AND_ASSIGN(CommandBuffer);
-};
-
-CommandBuffer::CommandBuffer() {}
-
-CommandBuffer::~CommandBuffer() {}
-
-void CommandBuffer::Write(const char* buffer, size_t length) {
-  stream_.write(buffer, length);
-}
-
-void CommandBuffer::MoveCursorTo(int x, int y) {
-  stream_ << ESC "[" << y + 1 << ";" << x + 1 << "H";
-}
-
-void CommandBuffer::SetForegroundColor(term::Color color) {
-  stream_ << ESC "[" << term::kForegroundColors[static_cast<int>(color)] << "m";
-}
-
-void CommandBuffer::SetBackgroundColor(term::Color color) {
-  stream_ << ESC "[" << term::kBackgroundColors[static_cast<int>(color)] << "m";
-}
-
-void CommandBuffer::Execute() {
-  term::Put(stream_.str());
-}
 
 class File {
  public:
@@ -239,7 +38,7 @@ class File {
   void Clear();
   void Read(const std::string& path);
 
-  void Display(CommandBuffer* commands, int line_index);
+  void Display(term::CommandBuffer* commands, int line_index);
 
   size_t line_count() const { return lines_.size(); }
 
@@ -293,7 +92,7 @@ void File::Read(const std::string& path) {
   }
 }
 
-void File::Display(CommandBuffer* commands, int line_index) {
+void File::Display(term::CommandBuffer* commands, int line_index) {
   const std::string& line = lines_[line_index];
   // TODO(abarth): What if we don't want to fill the entire terminal?
   size_t count = std::min(line.size(), term::cols);
@@ -371,7 +170,7 @@ int Shell::Run() {
 }
 
 void Shell::Display() {
-  CommandBuffer commands;
+  term::CommandBuffer commands;
   commands << term::kSaveCursorPosition << term::kEraseScreen
            << term::kMoveCursorHome;
   if (!files_.empty()) {
