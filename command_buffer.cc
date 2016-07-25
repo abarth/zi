@@ -14,11 +14,16 @@
 
 #include "command_buffer.h"
 
-namespace term {
+namespace zi {
 
 CommandBuffer::CommandBuffer() {}
 
 CommandBuffer::~CommandBuffer() {}
+
+CommandBuffer& CommandBuffer::operator<<(const StringView& text) {
+  Write(text.data(), text.length());
+  return *this;
+}
 
 void CommandBuffer::Write(const char* buffer, size_t length) {
   stream_.write(buffer, length);
@@ -29,15 +34,15 @@ void CommandBuffer::MoveCursorTo(int x, int y) {
 }
 
 void CommandBuffer::SetForegroundColor(term::Color color) {
-  stream_ << ESC "[" << kForegroundColors[static_cast<int>(color)] << "m";
+  stream_ << ESC "[" << term::kForegroundColors[static_cast<int>(color)] << "m";
 }
 
 void CommandBuffer::SetBackgroundColor(term::Color color) {
-  stream_ << ESC "[" << kBackgroundColors[static_cast<int>(color)] << "m";
+  stream_ << ESC "[" << term::kBackgroundColors[static_cast<int>(color)] << "m";
 }
 
 void CommandBuffer::Execute() {
-  Put(stream_.str());
+  term::Put(stream_.str());
 }
 
-}  // namespace term
+}  // namespace zi

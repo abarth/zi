@@ -27,78 +27,34 @@
 #include "macros.h"
 #include "scoped_fd.h"
 #include "term.h"
+#include "text_buffer.h"
 
 namespace zi {
 
-class File {
- public:
-  File();
-  ~File();
-
-  void Clear();
-  void Read(const std::string& path);
-
-  void Display(term::CommandBuffer* commands, int line_index);
-
-  size_t line_count() const { return lines_.size(); }
-
- private:
-  std::vector<std::string> lines_;
-  bool has_terminating_newline_ = true;
-
-  DISALLOW_COPY_AND_ASSIGN(File);
-};
-
-File::File() {}
-
-File::~File() {}
-
-void File::Clear() {
-  lines_.clear();
-  has_terminating_newline_ = true;
-}
-
-void File::Read(const std::string& path) {
-  Clear();
+std::vector<char> ReadFile(const std::string& path) {
+  std::vector<char> result;
   ScopedFD fd(HANDLE_EINTR(open(path.c_str(), O_RDONLY)));
   // TODO(abarth): Add an error reporting mechanism.
   if (!fd.is_valid())
-    return;
-  std::string current_line;
+    return result;
   constexpr size_t kBufferSize = 1 << 16;
   char buffer[kBufferSize];
   for (;;) {
     int count = HANDLE_EINTR(read(fd.get(), buffer, kBufferSize));
     if (count == -1)
-      return;
+      return result;
     if (count == 0)
       break;
-    const char* pos = buffer;
-    const char* end = pos + count;
-    while (pos != end) {
-      const char* newline = std::find(pos, end, '\n');
-      if (!newline)
-        break;
-      current_line.append(pos, newline);
-      lines_.push_back(std::move(current_line));
-      current_line.clear();
-      pos = newline + 1;
-    }
-    current_line.append(pos, end);
+    result.insert(result.end(), buffer, buffer + count);
   }
-  if (!current_line.empty()) {
-    has_terminating_newline_ = false;
-    lines_.push_back(std::move(current_line));
-  }
+  return result;
 }
 
-void File::Display(term::CommandBuffer* commands, int line_index) {
-  const std::string& line = lines_[line_index];
-  // TODO(abarth): What if we don't want to fill the entire terminal?
-  size_t count = std::min(line.size(), term::cols);
-  commands->Write(line.data(), count);
-  *commands << term::kEraseToEndOfLine;
-}
+enum class Mode {
+  Vi,
+  Command,
+  Input,
+};
 
 class Shell {
  public:
@@ -109,14 +65,28 @@ class Shell {
 
   int Run();
 
-  void set_status(std::string status) { status_ = std::move(status); }
+  void mark_needs_display() { needs_display_ = true; }
 
  private:
   void Display();
 
+  void MoveCursorLeft();
+  void MoveCursorDown();
+  void MoveCursorUp();
+  void MoveCursorRight();
+
+  void HandleCharacterInViMode(char c);
+  void HandleCharacterInCommandMode(char c);
+  void HandleCharacterInInputMode(char c);
+
+  void ExecuteCommand(const std::string& command);
+
+  Mode mode_ = Mode::Vi;
   std::string status_;
-  std::vector<std::unique_ptr<File>> files_;
-  size_t current_file_ = 0;
+  TextBuffer text_;
+
+  bool should_quit_ = false;
+  bool needs_display_ = false;
 
   DISALLOW_COPY_AND_ASSIGN(Shell);
 };
@@ -131,59 +101,124 @@ Shell::~Shell() {
 }
 
 void Shell::OpenFile(const std::string& path) {
-  std::unique_ptr<File> file(new File());
-  file->Read(path);
-  current_file_ = files_.size();
-  files_.push_back(std::move(file));
+  text_.SetText(ReadFile(path));
 }
 
 int Shell::Run() {
   Display();
-  for (;;) {
+  while (!should_quit_) {
     char c = '\0';
     int count = read(STDIN_FILENO, &c, 1);
     if (count == -1)
       return 1;
     if (count == 0)
       continue;
-    switch (c) {
-      case 'q':
-        return 0;
-      case 'h':
-        term::Put(term::kMoveCursorLeft);
-        continue;
-      case 'j':
-        term::Put(term::kMoveCursorDown);
-        continue;
-      case 'k':
-        term::Put(term::kMoveCursorUp);
-        continue;
-      case 'l':
-        term::Put(term::kMoveCursorRight);
-        continue;
-      default:
-        status_ = c;
+    switch (mode_) {
+      case Mode::Vi:
+        HandleCharacterInViMode(c);
+        break;
+      case Mode::Command:
+        HandleCharacterInCommandMode(c);
+        break;
+      case Mode::Input:
+        HandleCharacterInInputMode(c);
+        break;
     }
-    Display();
+    if (needs_display_)
+      Display();
   }
   return 0;
 }
 
+void Shell::MoveCursorLeft() {
+  term::Put(term::kMoveCursorLeft);
+  // TODO(abarth): Handle RTL.
+  text_.MoveCursorBackward();
+}
+
+void Shell::MoveCursorDown() {
+  // TODO(abarth): Understand line breaks.
+  // term::Put(term::kMoveCursorDown);
+}
+
+void Shell::MoveCursorUp() {
+  // TODO(abarth): Understand line breaks.
+  // term::Put(term::kMoveCursorUp);
+}
+
+void Shell::MoveCursorRight() {
+  term::Put(term::kMoveCursorRight);
+  // TODO(abarth): Handle RTL.
+  text_.MoveCursorForward();
+}
+
+void Shell::HandleCharacterInViMode(char c) {
+  switch (c) {
+    case 'h':
+      term::Put(term::kMoveCursorLeft);
+      break;
+    case 'j':
+      term::Put(term::kMoveCursorDown);
+      break;
+    case 'k':
+      term::Put(term::kMoveCursorUp);
+      break;
+    case 'l':
+      term::Put(term::kMoveCursorRight);
+      break;
+    case 'i':
+      mode_ = Mode::Input;
+      break;
+    case 'Z':
+      should_quit_ = true;
+      break;
+    case ':':
+      mode_ = Mode::Command;
+      status_ = ":";
+      mark_needs_display();
+      break;
+    default:
+      break;
+  }
+}
+
+void Shell::HandleCharacterInCommandMode(char c) {
+  if (c == '\n' || c == '\r') {
+    ExecuteCommand(status_);
+    status_.clear();
+    mark_needs_display();
+  } else if (c == '\x8') {
+    status_.pop_back();
+    mark_needs_display();
+  } else if (c == '\x1b') {
+    status_.clear();
+    mode_ = Mode::Vi;
+    mark_needs_display();
+  } else {
+    status_.push_back(c);
+    mark_needs_display();
+  }
+}
+
+void Shell::HandleCharacterInInputMode(char c) {
+  if (c == '\x1b') {
+    mode_ = Mode::Vi;
+    mark_needs_display();
+  } else {
+    text_.InsertCharacter(c);
+    mark_needs_display();
+  }
+}
+
+void Shell::ExecuteCommand(const std::string& command) {
+  if (command == ":q")
+    should_quit_ = true;
+}
+
 void Shell::Display() {
-  term::CommandBuffer commands;
+  CommandBuffer commands;
   commands << term::kSaveCursorPosition << term::kEraseScreen
            << term::kMoveCursorHome;
-  if (!files_.empty()) {
-    auto& file = files_[current_file_];
-    for (size_t i = 0; i < term::rows - 1; ++i) {
-      commands.MoveCursorTo(0, i);
-      if (i < file->line_count())
-        file->Display(&commands, i);
-      else
-        commands << term::kSetLowIntensity << "~"
-                 << term::kClearCharacterAttributes << term::kEraseToEndOfLine;
-    }
-  }
   commands.MoveCursorTo(0, term::rows - 1);
   commands << status_ << term::kEraseToEndOfLine
            << term::kRestoreCursorPosition;
@@ -199,9 +234,6 @@ int main(int argc, char** argv) {
   if (argc > 1) {
     std::string file_name = argv[1];
     shell.OpenFile(file_name);
-    shell.set_status(std::move(file_name));
-  } else {
-    shell.set_status("No file.");
   }
   return shell.Run();
 }

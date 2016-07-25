@@ -14,37 +14,40 @@
 
 #pragma once
 
-#include <sstream>
-
 #include "macros.h"
-#include "string_view.h"
-#include "term.h"
+
+#include <string>
+#include <vector>
 
 namespace zi {
 
-class CommandBuffer {
+class TextBuffer {
  public:
-  CommandBuffer();
-  ~CommandBuffer();
+  TextBuffer();
+  ~TextBuffer();
 
-  CommandBuffer& operator<<(const StringView& text);
+  void SetText(std::vector<char> text);
 
-  template <typename T>
-  CommandBuffer& operator<<(T&& value) {
-    stream_ << value;
-    return *this;
-  }
+  void InsertCharacter(char c);
+  void InsertText(std::string text);
+  void Backspace();
 
-  void Write(const char* buffer, size_t length);
-  void MoveCursorTo(int x, int y);
-  void SetForegroundColor(term::Color color);
-  void SetBackgroundColor(term::Color color);
-  void Execute();
+  void MoveCursorForward();
+  void MoveCursorBackward();
+
+  void MoveCursorBy(int offset);
+  void MoveCursorTo(size_t position);
+
+  size_t cursor_position() const { return gap_begin_; }
 
  private:
-  std::ostringstream stream_;
+  void Expand(size_t required_gap_size);
 
-  DISALLOW_COPY_AND_ASSIGN(CommandBuffer);
+  size_t gap_begin_ = 0;
+  size_t gap_end_ = 0;
+  std::vector<char> buffer_;
+
+  DISALLOW_COPY_AND_ASSIGN(TextBuffer);
 };
 
 }  // namespace zi

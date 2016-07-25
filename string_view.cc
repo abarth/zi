@@ -12,39 +12,15 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#pragma once
-
-#include <sstream>
-
-#include "macros.h"
 #include "string_view.h"
-#include "term.h"
 
 namespace zi {
 
-class CommandBuffer {
- public:
-  CommandBuffer();
-  ~CommandBuffer();
+StringView::StringView(const std::string& string)
+    : begin_(string.data()), end_(string.data() + string.length()) {}
 
-  CommandBuffer& operator<<(const StringView& text);
+StringView::StringView(char* begin, char* end) : begin_(begin), end_(end) {}
 
-  template <typename T>
-  CommandBuffer& operator<<(T&& value) {
-    stream_ << value;
-    return *this;
-  }
-
-  void Write(const char* buffer, size_t length);
-  void MoveCursorTo(int x, int y);
-  void SetForegroundColor(term::Color color);
-  void SetBackgroundColor(term::Color color);
-  void Execute();
-
- private:
-  std::ostringstream stream_;
-
-  DISALLOW_COPY_AND_ASSIGN(CommandBuffer);
-};
+StringView::~StringView() {}
 
 }  // namespace zi
