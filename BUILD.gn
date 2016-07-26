@@ -12,7 +12,7 @@
 # OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-executable("zi") {
+source_set("lib") {
   sources = [
     "command_buffer.cc",
     "command_buffer.h",
@@ -31,6 +31,27 @@ executable("zi") {
     "vector_extensions.h",
     "viewport.cc",
     "viewport.h",
+  ]
+}
+
+executable("zi") {
+  sources = [
     "zi.cc",
+  ]
+
+  deps = [
+    ":lib",
+  ]
+}
+
+executable("zi_unittests") {
+  sources = [
+    "//third_party/gtest/src/gtest_main.cc",
+    "text_buffer_unittest.cc",
+  ]
+
+  deps = [
+    ":lib",
+    "//third_party/gtest",
   ]
 }
