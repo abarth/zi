@@ -37,7 +37,7 @@ void TextBuffer::InsertText(std::string text) {
   const size_t length = text.length();
   if (gap_begin_ + length > gap_end_)
     Expand(length);
-  memcpy(&buffer_[gap_begin_], text.data(), length);
+  memmove(&buffer_[gap_begin_], text.data(), length);
   gap_begin_ += length;
   DidInsert(length);
 }
@@ -68,7 +68,7 @@ void TextBuffer::MoveCursorBy(int offset) {
   if (offset > 0) {
     size_t delta =
         std::min(static_cast<size_t>(offset), buffer_.size() - gap_end_);
-    memcpy(&buffer_[gap_begin_], &buffer_[gap_end_], delta);
+    memmove(&buffer_[gap_begin_], &buffer_[gap_end_], delta);
     gap_begin_ += delta;
     gap_end_ += delta;
     DidMoveCursorForward();
@@ -76,7 +76,7 @@ void TextBuffer::MoveCursorBy(int offset) {
     size_t delta = std::min(static_cast<size_t>(-offset), gap_begin_);
     gap_begin_ -= delta;
     gap_end_ -= delta;
-    memcpy(&buffer_[gap_end_], &buffer_[gap_begin_], delta);
+    memmove(&buffer_[gap_end_], &buffer_[gap_begin_], delta);
     DidMoveCursorBackward();
   }
 }
@@ -103,6 +103,16 @@ size_t TextBuffer::Find(char c, size_t pos) {
       return ptr - data() - gap_size();
   }
   return std::string::npos;
+}
+
+std::string TextBuffer::ToString() const {
+  std::string result;
+  result.resize(size());
+  if (gap_begin_ > 0)
+    memcpy(&result[0], data(), gap_begin_);
+  if (gap_end_ < buffer_.size())
+    memcpy(&result[gap_begin_], &buffer_[gap_end_], buffer_.size() - gap_end_);
+  return result;
 }
 
 std::pair<StringView, StringView> TextBuffer::GetTextForSpan(
@@ -143,16 +153,16 @@ void TextBuffer::Expand(size_t required_gap_size) {
   if (existing_gap >= required_gap_size)
     return;
   size_t min_size = buffer_.size() - existing_gap + required_gap_size;
-  size_t tail_size = buffer_.size() - gap_end_;
   std::vector<char> new_buffer(min_size * 1.5 + 1);
   if (gap_begin_ > 0)
     memcpy(&new_buffer[0], data(), gap_begin_);
-  if (tail_size > 0) {
+  if (gap_end_ < buffer_.size()) {
+    size_t tail_size = buffer_.size() - gap_end_;
     memcpy(&new_buffer[new_buffer.size() - tail_size],
            &buffer_[buffer_.size() - tail_size], tail_size);
   }
+  gap_end_ += new_buffer.size() - buffer_.size();
   buffer_.swap(new_buffer);
-  gap_end_ = buffer_.size() - tail_size;
 }
 
 void TextBuffer::DidInsert(size_t count) {

@@ -28,7 +28,7 @@ TEST(TextBuffer, Find) {
   std::vector<char> data;
   data.insert(data.end(), text.begin(), text.end());
 
-  zi::TextBuffer buffer(std::move(data));
+  TextBuffer buffer(std::move(data));
   buffer.InsertCharacter('x');
   buffer.InsertCharacter('y');
   buffer.InsertCharacter('z');
@@ -46,6 +46,29 @@ TEST(TextBuffer, Find) {
   EXPECT_EQ(6u, buffer.Find('l', 6));
   EXPECT_EQ(13u, buffer.Find('l', 7));
   EXPECT_EQ(14u, buffer.Find('d'));
+}
+
+TEST(TextBuffer, Insert) {
+  std::string text = "Hello, world";
+  std::vector<char> data;
+  data.insert(data.end(), text.begin(), text.end());
+
+  TextBuffer buffer(std::move(data));
+  buffer.MoveCursorBy(3);
+  buffer.InsertCharacter('x');
+  buffer.InsertCharacter('y');
+  buffer.InsertCharacter('z');
+
+  EXPECT_EQ("Helxyzlo, world", buffer.ToString());
+  buffer.MoveCursorBy(-2);
+  EXPECT_EQ("Helxyzlo, world", buffer.ToString());
+  buffer.MoveCursorForward();
+  EXPECT_EQ("Helxyzlo, world", buffer.ToString());
+  buffer.MoveCursorBackward();
+  EXPECT_EQ("Helxyzlo, world", buffer.ToString());
+
+  buffer.InsertText("four score and seven years ago");
+  EXPECT_EQ("Helxfour score and seven years agoyzlo, world", buffer.ToString());
 }
 
 }  // namespace
