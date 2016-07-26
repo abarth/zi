@@ -71,11 +71,6 @@ class Shell {
  private:
   void Display();
 
-  void MoveCursorLeft();
-  void MoveCursorDown();
-  void MoveCursorUp();
-  void MoveCursorRight();
-
   void HandleCharacterInViMode(char c);
   void HandleCharacterInCommandMode(char c);
   void HandleCharacterInInputMode(char c);
@@ -133,41 +128,23 @@ int Shell::Run() {
   return 0;
 }
 
-void Shell::MoveCursorLeft() {
-  term::Put(term::kMoveCursorLeft);
-  // TODO(abarth): Handle RTL.
-  viewport_.text()->MoveCursorBackward();
-}
-
-void Shell::MoveCursorDown() {
-  // TODO(abarth): Understand line breaks.
-  // term::Put(term::kMoveCursorDown);
-}
-
-void Shell::MoveCursorUp() {
-  // TODO(abarth): Understand line breaks.
-  // term::Put(term::kMoveCursorUp);
-}
-
-void Shell::MoveCursorRight() {
-  term::Put(term::kMoveCursorRight);
-  // TODO(abarth): Handle RTL.
-  viewport_.text()->MoveCursorForward();
-}
-
 void Shell::HandleCharacterInViMode(char c) {
   switch (c) {
     case 'h':
-      MoveCursorLeft();
+      viewport_.MoveCursorLeft();
+      mark_needs_display();
       break;
     case 'j':
-      MoveCursorDown();
+      viewport_.MoveCursorDown();
+      mark_needs_display();
       break;
     case 'k':
-      MoveCursorUp();
+      viewport_.MoveCursorUp();
+      mark_needs_display();
       break;
     case 'l':
-      MoveCursorRight();
+      viewport_.MoveCursorRight();
+      mark_needs_display();
       break;
     case 'i':
       mode_ = Mode::Input;
@@ -221,12 +198,11 @@ void Shell::ExecuteCommand(const std::string& command) {
 
 void Shell::Display() {
   CommandBuffer commands;
-  commands << term::kSaveCursorPosition << term::kEraseScreen
-           << term::kMoveCursorHome;
+  commands << term::kEraseScreen;
   viewport_.Display(&commands);
   commands.MoveCursorTo(0, term::rows - 1);
-  commands << status_ << term::kEraseToEndOfLine
-           << term::kRestoreCursorPosition;
+  commands << status_ << term::kEraseToEndOfLine;
+  viewport_.UpdateCursor(&commands);
   commands.Execute();
 }
 

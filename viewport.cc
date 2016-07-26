@@ -46,25 +46,92 @@ void Viewport::Display(CommandBuffer* commands) {
   }
 }
 
+void Viewport::UpdateCursor(CommandBuffer* commands) {
+  commands->MoveCursorTo(cursor_col_, cursor_row_);
+}
+
 void Viewport::Resize(size_t width, size_t height) {
   width_ = width;
   height_ = height;
 }
 
-void Viewport::ScrollTo(size_t first_line) {
-  first_line_ = first_line;
+void Viewport::ScrollTo(size_t line) {
+  base_line_ = line;
+  lines_.clear();
+  // TODO(abarth): Make UpdateLines lazy.
+  UpdateLines();
 }
 
 void Viewport::ScrollBy(int delta) {
   if (delta < 0)
-    ScrollTo(first_line_ - std::min(first_line_, static_cast<size_t>(-delta)));
+    ScrollTo(base_line_ - std::min(base_line_, static_cast<size_t>(-delta)));
   else
-    ScrollTo(first_line_ + delta);
+    ScrollTo(base_line_ + delta);
+}
+
+void Viewport::MoveCursorLeft() {
+  if (cursor_col_ > 0) {
+    --cursor_col_;
+    // TODO(abarth): Handle RTL.
+    text_->MoveCursorForward();
+    return;
+  }
+  if (cursor_row_ != 0) {
+    --cursor_row_;
+    EnsureCursorVisible();
+    cursor_col_ = GetCurrentLine()->length();
+    UpdateTextCursor();
+  }
+}
+
+void Viewport::MoveCursorDown() {
+  ++cursor_row_;
+  EnsureCursorVisible();
+  cursor_col_ = std::min(cursor_col_, GetCurrentLine()->length());
+  UpdateTextCursor();
+}
+
+void Viewport::MoveCursorUp() {
+  if (cursor_row_ != 0) {
+    --cursor_row_;
+    EnsureCursorVisible();
+    cursor_col_ = std::min(cursor_col_, GetCurrentLine()->length());
+    UpdateTextCursor();
+  }
+}
+
+void Viewport::MoveCursorRight() {
+  if (cursor_col_ < GetCurrentLine()->length()) {
+    ++cursor_col_;
+    // TODO(abarth): Handle RTL.
+    text_->MoveCursorBackward();
+    return;
+  }
+  ++cursor_row_;
+  if (cursor_row_ >= base_line_ + height_)
+    ScrollTo(cursor_row_ - height_ + 1);
+  cursor_col_ = 0;
+  UpdateTextCursor();
+}
+
+void Viewport::EnsureCursorVisible() {
+  if (cursor_row_ < base_line_)
+    ScrollTo(cursor_row_);
+  else if (cursor_row_ > base_line_ + height_)
+    ScrollTo(cursor_row_ - height_ + 1);
+}
+
+TextSpan* Viewport::GetCurrentLine() const {
+  return lines_[cursor_row_ - base_line_].get();
+}
+
+void Viewport::UpdateTextCursor() {
+  text_->MoveCursorTo(GetCurrentLine()->begin() + cursor_col_);
 }
 
 void Viewport::UpdateLines() {
   size_t offset = 0;
-  for (size_t i = 0; i < first_line_; ++i) {
+  for (size_t i = 0; i < base_line_; ++i) {
     offset = text_->Find('\n', offset);
     if (offset == std::string::npos)
       return;
@@ -78,7 +145,7 @@ void Viewport::UpdateLines() {
         lines_.emplace_back(new TextSpan(offset, text_->size()));
       return;
     }
-    lines_.emplace_back(new TextSpan(offset, end + 1));
+    lines_.emplace_back(new TextSpan(offset, end));
     offset = end + 1;
   }
 }

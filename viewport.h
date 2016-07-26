@@ -30,7 +30,9 @@ class Viewport {
   ~Viewport();
 
   void SetText(std::unique_ptr<TextBuffer> text);
+
   void Display(CommandBuffer* commands);
+  void UpdateCursor(CommandBuffer* commands);
 
   void Resize(size_t width, size_t height);
   void ScrollTo(size_t first_line);
@@ -39,9 +41,16 @@ class Viewport {
   TextBuffer* text() const { return text_.get(); }
   size_t width() const { return width_; }
   size_t height() const { return height_; }
-  size_t first_line() const { return first_line_; }
+
+  void MoveCursorLeft();
+  void MoveCursorDown();
+  void MoveCursorUp();
+  void MoveCursorRight();
 
  private:
+  TextSpan* GetCurrentLine() const;
+  void EnsureCursorVisible();
+  void UpdateTextCursor();
   void UpdateLines();
 
   std::unique_ptr<TextBuffer> text_;
@@ -49,7 +58,10 @@ class Viewport {
 
   size_t width_ = 0;
   size_t height_ = 0;
-  size_t first_line_ = 0;
+  size_t base_line_ = 0;
+
+  size_t cursor_col_ = 0;
+  size_t cursor_row_ = 0;
 
   DISALLOW_COPY_AND_ASSIGN(Viewport);
 };
