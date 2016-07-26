@@ -71,5 +71,45 @@ TEST(TextBuffer, Insert) {
   EXPECT_EQ("Helxfour score and seven years agoyzlo, world", buffer.ToString());
 }
 
+TEST(TextBuffer, Span) {
+  std::string text = "Hello, world";
+  std::vector<char> data;
+  data.insert(data.end(), text.begin(), text.end());
+
+  TextBuffer buffer(std::move(data));
+  buffer.MoveCursorBy(3);
+  buffer.InsertCharacter('x');
+  buffer.InsertCharacter('y');
+  buffer.InsertCharacter('z');
+
+  auto check = [&buffer](size_t begin, size_t end, std::string first,
+                         std::string second) {
+    TextSpan span(begin, end);
+    auto pair = buffer.GetTextForSpan(&span);
+    EXPECT_EQ(first, pair.first.ToString());
+    EXPECT_EQ(second, pair.second.ToString());
+  };
+
+  check(0, 0, "", "");
+  check(0, 1, "H", "");
+  check(0, 2, "He", "");
+  check(0, 3, "Hel", "");
+  check(0, 4, "Helx", "");
+  check(0, 5, "Helxy", "");
+  check(0, 6, "Helxyz", "");
+  check(0, 7, "Helxyz", "l");
+  check(0, 8, "Helxyz", "lo");
+  check(0, 9, "Helxyz", "lo,");
+  check(1, 9, "elxyz", "lo,");
+  check(2, 9, "lxyz", "lo,");
+  check(3, 9, "xyz", "lo,");
+  check(4, 9, "yz", "lo,");
+  check(5, 9, "z", "lo,");
+  check(6, 9, "", "lo,");
+  check(7, 9, "", "o,");
+  check(8, 9, "", ",");
+  check(9, 9, "", "");
+}
+
 }  // namespace
 }  // namespace zi

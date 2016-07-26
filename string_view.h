@@ -33,6 +33,8 @@ class StringView {
 
   bool is_empty() const { return begin_ == end_; }
 
+  std::string ToString() const;
+
  private:
   const char* begin_ = nullptr;
   const char* end_ = nullptr;

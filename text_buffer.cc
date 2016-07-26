@@ -121,12 +121,12 @@ std::pair<StringView, StringView> TextBuffer::GetTextForSpan(
     const char* begin = &buffer_[span->begin()];
     return std::make_pair(StringView(begin, begin + span->length()),
                           StringView());
-  } else if (span->begin() >= gap_end_) {
+  } else if (span->begin() >= gap_begin_) {
     const char* begin = &buffer_[span->begin() + gap_size()];
     // TODO(abarth): Should we handle the case where the span extends beyond the
     // buffer?
-    return std::make_pair(StringView(begin, begin + span->length()),
-                          StringView());
+    return std::make_pair(StringView(),
+                          StringView(begin, begin + span->length()));
   } else {
     // The span crosses the gap.
     const char* first_begin = &buffer_[span->begin()];

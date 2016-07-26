@@ -26,4 +26,8 @@ StringView::StringView(const char* begin, const char* end)
 
 StringView::~StringView() {}
 
+std::string StringView::ToString() const {
+  return std::string(begin(), end());
+}
+
 }  // namespace zi
