@@ -16,6 +16,8 @@ source_set("lib") {
   sources = [
     "command_buffer.cc",
     "command_buffer.h",
+    "line_tracker.cc",
+    "line_tracker.h",
     "macros.h",
     "scoped_fd.cc",
     "scoped_fd.h",

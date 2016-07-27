@@ -18,9 +18,10 @@
 #include <vector>
 
 #include "command_buffer.h"
+#include "line_tracker.h"
 #include "macros.h"
-#include "text_span.h"
 #include "text_buffer.h"
+#include "text_span.h"
 
 namespace zi {
 
@@ -49,19 +50,22 @@ class Viewport {
 
  private:
   TextSpan* GetCurrentLine() const;
+  size_t GetMaxCursorColumn() const;
   void EnsureCursorVisible();
   void UpdateTextCursor();
   void UpdateLines();
 
   std::unique_ptr<TextBuffer> text_;
-  std::vector<std::unique_ptr<TextSpan>> lines_;
+  LineTracker lines_;
 
   size_t width_ = 0;
   size_t height_ = 0;
+
   size_t base_line_ = 0;
 
   size_t cursor_col_ = 0;
   size_t cursor_row_ = 0;
+  size_t preferred_cursor_col_ = 0;
 
   DISALLOW_COPY_AND_ASSIGN(Viewport);
 };

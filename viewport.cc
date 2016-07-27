@@ -27,14 +27,14 @@ Viewport::~Viewport() {}
 
 void Viewport::SetText(std::unique_ptr<TextBuffer> text) {
   text_ = std::move(text);
+  lines_.Clear();
 }
 
 void Viewport::Display(CommandBuffer* commands) {
-  lines_.clear();
-  UpdateLines();
+  lines_.UpdateLines(text_.get());
   for (size_t i = 0; i < lines_.size(); ++i) {
     commands->MoveCursorTo(0, i);
-    *commands << text_->GetTextForSpan(lines_[i].get());
+    *commands << text_->GetTextForSpan(lines_.GetLine(i + base_line_));
   }
   if (height_ > lines_.size()) {
     *commands << term::kSetLowIntensity;
@@ -47,7 +47,7 @@ void Viewport::Display(CommandBuffer* commands) {
 }
 
 void Viewport::UpdateCursor(CommandBuffer* commands) {
-  commands->MoveCursorTo(cursor_col_, cursor_row_);
+  commands->MoveCursorTo(cursor_col_, cursor_row_ - base_line_);
 }
 
 void Viewport::Resize(size_t width, size_t height) {
@@ -57,9 +57,6 @@ void Viewport::Resize(size_t width, size_t height) {
 
 void Viewport::ScrollTo(size_t line) {
   base_line_ = line;
-  lines_.clear();
-  // TODO(abarth): Make UpdateLines lazy.
-  UpdateLines();
 }
 
 void Viewport::ScrollBy(int delta) {
@@ -70,48 +67,47 @@ void Viewport::ScrollBy(int delta) {
 }
 
 void Viewport::MoveCursorLeft() {
+  // TODO(abarth): Handle RTL.
   if (cursor_col_ > 0) {
     --cursor_col_;
-    // TODO(abarth): Handle RTL.
-    text_->MoveCursorForward();
-    return;
-  }
-  if (cursor_row_ != 0) {
-    --cursor_row_;
-    EnsureCursorVisible();
-    cursor_col_ = GetCurrentLine()->length();
+    preferred_cursor_col_ = cursor_col_;
     UpdateTextCursor();
+  } else {
+    term::Put(term::kBell);
   }
 }
 
 void Viewport::MoveCursorDown() {
-  ++cursor_row_;
-  EnsureCursorVisible();
-  cursor_col_ = std::min(cursor_col_, GetCurrentLine()->length());
-  UpdateTextCursor();
+  if (cursor_row_ + 1 < lines_.size()) {
+    ++cursor_row_;
+    EnsureCursorVisible();
+    cursor_col_ = std::min(preferred_cursor_col_, GetMaxCursorColumn());
+    UpdateTextCursor();
+  } else {
+    term::Put(term::kBell);
+  }
 }
 
 void Viewport::MoveCursorUp() {
-  if (cursor_row_ != 0) {
+  if (cursor_row_ > 0) {
     --cursor_row_;
     EnsureCursorVisible();
-    cursor_col_ = std::min(cursor_col_, GetCurrentLine()->length());
+    cursor_col_ = std::min(preferred_cursor_col_, GetMaxCursorColumn());
     UpdateTextCursor();
+  } else {
+    term::Put(term::kBell);
   }
 }
 
 void Viewport::MoveCursorRight() {
-  if (cursor_col_ < GetCurrentLine()->length()) {
+  // TODO(abarth): Handle RTL.
+  if (cursor_col_ < GetMaxCursorColumn()) {
     ++cursor_col_;
-    // TODO(abarth): Handle RTL.
-    text_->MoveCursorBackward();
-    return;
+    preferred_cursor_col_ = cursor_col_;
+    UpdateTextCursor();
+  } else {
+    term::Put(term::kBell);
   }
-  ++cursor_row_;
-  if (cursor_row_ >= base_line_ + height_)
-    ScrollTo(cursor_row_ - height_ + 1);
-  cursor_col_ = 0;
-  UpdateTextCursor();
 }
 
 void Viewport::EnsureCursorVisible() {
@@ -122,32 +118,18 @@ void Viewport::EnsureCursorVisible() {
 }
 
 TextSpan* Viewport::GetCurrentLine() const {
-  return lines_[cursor_row_ - base_line_].get();
+  return lines_.GetLine(cursor_row_);
+}
+
+size_t Viewport::GetMaxCursorColumn() const {
+  size_t length = GetCurrentLine()->length();
+  if (length > 0)
+    length -= 1;
+  return length;
 }
 
 void Viewport::UpdateTextCursor() {
   text_->MoveCursorTo(GetCurrentLine()->begin() + cursor_col_);
-}
-
-void Viewport::UpdateLines() {
-  size_t offset = 0;
-  for (size_t i = 0; i < base_line_; ++i) {
-    offset = text_->Find('\n', offset);
-    if (offset == std::string::npos)
-      return;
-    ++offset;
-  }
-  for (size_t i = 0; i < height_; ++i) {
-    size_t end = text_->Find('\n', offset);
-    std::unique_ptr<TextSpan> line;
-    if (end == std::string::npos) {
-      if (offset < text_->size())
-        lines_.emplace_back(new TextSpan(offset, text_->size()));
-      return;
-    }
-    lines_.emplace_back(new TextSpan(offset, end));
-    offset = end + 1;
-  }
 }
 
 }  // namespace zi

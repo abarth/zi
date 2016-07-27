@@ -42,7 +42,7 @@ void TextBuffer::InsertText(std::string text) {
   DidInsert(length);
 }
 
-void TextBuffer::Backspace() {
+void TextBuffer::DeleteCharacter() {
   if (gap_begin_ > 0) {
     --gap_begin_;
     DidDelete(1);

@@ -186,7 +186,6 @@ void Shell::HandleCharacterInInputMode(char c) {
     mark_needs_display();
   } else {
     viewport_.text()->InsertCharacter(c);
-    term::Put(term::kMoveCursorRight);
     mark_needs_display();
   }
 }

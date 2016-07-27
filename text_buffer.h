@@ -34,7 +34,7 @@ class TextBuffer {
 
   void InsertCharacter(char c);
   void InsertText(std::string text);
-  void Backspace();
+  void DeleteCharacter();
 
   void MoveCursorForward();
   void MoveCursorBackward();
