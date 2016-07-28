@@ -101,6 +101,12 @@ std::string TextBuffer::ToString() const {
   return result;
 }
 
+std::pair<StringView, StringView> TextBuffer::GetText() const {
+  const char* data = buffer_.data();
+  return std::make_pair(StringView(data, data + gap_begin_),
+                        StringView(data + gap_end_, data + buffer_.size()));
+}
+
 std::pair<StringView, StringView> TextBuffer::GetTextForSpan(
     TextSpan* span) const {
   if (span->end() <= gap_begin_) {

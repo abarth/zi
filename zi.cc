@@ -51,6 +51,36 @@ std::vector<char> ReadFile(const std::string& path) {
   return result;
 }
 
+bool WriteFileDescriptor(int fd, const char* data, ssize_t size) {
+  ssize_t total = 0;
+  for (ssize_t partial = 0; total < size; total += partial) {
+    partial = HANDLE_EINTR(write(fd, data + total, size - total));
+    if (partial < 0)
+      return false;
+  }
+  return true;
+}
+
+bool WriteStringViewToFileDescriptor(int fd, StringView string_view) {
+  return WriteFileDescriptor(fd, string_view.begin(), string_view.length());
+}
+
+bool WriteAtomically(const std::string& path,
+                     std::pair<StringView, StringView> text) {
+  // TODO(abarth): We should open this file at the start and hold onto it.
+  std::string temp_path = path + ".swp";
+  ScopedFD fd(HANDLE_EINTR(creat(temp_path.c_str(), 0666)));
+  // TODO(abarth): Add an error reporting mechanism.
+  if (!fd.is_valid())
+    return false;
+  if (!WriteStringViewToFileDescriptor(fd.get(), text.first) ||
+      !WriteStringViewToFileDescriptor(fd.get(), text.second)) {
+    unlink(temp_path.c_str());
+    return false;
+  }
+  return rename(temp_path.c_str(), path.c_str()) != -1;
+}
+
 enum class Mode {
   Vi,
   Command,
@@ -63,6 +93,7 @@ class Shell {
   ~Shell();
 
   void OpenFile(const std::string& path);
+  void Save();
 
   int Run();
 
@@ -77,6 +108,7 @@ class Shell {
 
   void ExecuteCommand(const std::string& command);
 
+  std::string path_;
   Mode mode_ = Mode::Vi;
   std::string status_;
   Viewport viewport_;
@@ -100,6 +132,11 @@ Shell::~Shell() {
 void Shell::OpenFile(const std::string& path) {
   std::unique_ptr<TextBuffer> text(new TextBuffer(ReadFile(path)));
   viewport_.SetText(std::move(text));
+  path_ = std::move(path);
+}
+
+void Shell::Save() {
+  WriteAtomically(path_, viewport_.text()->GetText());
 }
 
 int Shell::Run() {
@@ -165,7 +202,6 @@ void Shell::HandleCharacterInViMode(char c) {
 void Shell::HandleCharacterInCommandMode(char c) {
   if (c == '\n' || c == '\r') {
     ExecuteCommand(status_);
-    status_.clear();
     mark_needs_display();
   } else if (c == '\x8') {
     status_.pop_back();
@@ -201,6 +237,11 @@ void Shell::HandleCharacterInInputMode(char c) {
 void Shell::ExecuteCommand(const std::string& command) {
   if (command == ":q")
     should_quit_ = true;
+  else if (command == ":w") {
+    status_ = "Saving file to " + path_;
+    Save();
+  }
+  mode_ = Mode::Vi;
 }
 
 void Shell::Display() {

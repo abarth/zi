@@ -41,8 +41,9 @@ class TextBuffer {
 
   bool is_empty() const { return size() == 0u; }
   size_t size() const { return buffer_.size() - gap_size(); }
-  std::string ToString() const;
 
+  std::string ToString() const;
+  std::pair<StringView, StringView> GetText() const;
   std::pair<StringView, StringView> GetTextForSpan(TextSpan* span) const;
 
   void AddSpan(TextSpan* span);
