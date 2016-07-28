@@ -26,66 +26,52 @@ TextBuffer::TextBuffer(std::vector<char> text) : buffer_(std::move(text)) {}
 
 TextBuffer::~TextBuffer() {}
 
-void TextBuffer::InsertCharacter(char c) {
+void TextBuffer::InsertCharacter(size_t position, char c) {
   if (gap_begin_ == gap_end_)
     Expand(1);
+  MoveInsertionPointTo(position);
   buffer_[gap_begin_++] = c;
   DidInsert(1);
 }
 
-void TextBuffer::InsertText(std::string text) {
+void TextBuffer::InsertText(size_t position, std::string text) {
   const size_t length = text.length();
   if (gap_begin_ + length > gap_end_)
     Expand(length);
-  memmove(&buffer_[gap_begin_], text.data(), length);
+  MoveInsertionPointTo(position);
+  memcpy(&buffer_[gap_begin_], text.data(), length);
   gap_begin_ += length;
   DidInsert(length);
 }
 
-void TextBuffer::DeleteCharacter() {
-  if (gap_begin_ > 0) {
-    --gap_begin_;
-    DidDelete(1);
-    DidMoveCursorBackward();
-  }
+void TextBuffer::DeleteCharacter(size_t position) {
+  MoveInsertionPointTo(position + 1);
+  --gap_begin_;
+  DidDelete(1);
+  DidMoveInsertionPointBackward();
 }
 
-void TextBuffer::MoveCursorForward() {
-  if (gap_end_ < buffer_.size()) {
-    buffer_[gap_begin_++] = buffer_[gap_end_++];
-    DidMoveCursorForward();
-  }
+void TextBuffer::MoveInsertionPointForward(size_t offset) {
+  size_t delta = std::min(offset, buffer_.size() - gap_end_);
+  memmove(&buffer_[gap_begin_], &buffer_[gap_end_], delta);
+  gap_begin_ += delta;
+  gap_end_ += delta;
+  DidMoveInsertionPointForward();
 }
 
-void TextBuffer::MoveCursorBackward() {
-  if (gap_begin_ > 0) {
-    buffer_[--gap_end_] = buffer_[--gap_begin_];
-    DidMoveCursorBackward();
-  }
+void TextBuffer::MoveInsertionPointBackward(size_t offset) {
+  size_t delta = std::min(offset, gap_begin_);
+  gap_begin_ -= delta;
+  gap_end_ -= delta;
+  memmove(&buffer_[gap_end_], &buffer_[gap_begin_], delta);
+  DidMoveInsertionPointBackward();
 }
 
-void TextBuffer::MoveCursorBy(int offset) {
-  if (offset > 0) {
-    size_t delta =
-        std::min(static_cast<size_t>(offset), buffer_.size() - gap_end_);
-    memmove(&buffer_[gap_begin_], &buffer_[gap_end_], delta);
-    gap_begin_ += delta;
-    gap_end_ += delta;
-    DidMoveCursorForward();
-  } else if (offset < 0) {
-    size_t delta = std::min(static_cast<size_t>(-offset), gap_begin_);
-    gap_begin_ -= delta;
-    gap_end_ -= delta;
-    memmove(&buffer_[gap_end_], &buffer_[gap_begin_], delta);
-    DidMoveCursorBackward();
-  }
-}
-
-void TextBuffer::MoveCursorTo(size_t position) {
-  if (position > cursor_position())
-    MoveCursorBy(position - cursor_position());
-  else if (position < cursor_position())
-    MoveCursorBy(-static_cast<int>(cursor_position() - position));
+void TextBuffer::MoveInsertionPointTo(size_t position) {
+  if (position > gap_begin_)
+    MoveInsertionPointForward(position - gap_begin_);
+  else if (position < gap_begin_)
+    MoveInsertionPointBackward(gap_begin_ - position);
 }
 
 size_t TextBuffer::Find(char c, size_t pos) {
@@ -177,7 +163,7 @@ void TextBuffer::DidDelete(size_t count) {
   after_gap_.ShiftBackward(count);
 }
 
-void TextBuffer::DidMoveCursorForward() {
+void TextBuffer::DidMoveInsertionPointForward() {
   std::vector<TextSpan*> displaced;
   across_gap_.swap(displaced);
   while (!after_gap_.empty() && after_gap_.top()->begin() < gap_end_) {
@@ -190,7 +176,7 @@ void TextBuffer::DidMoveCursorForward() {
     AddSpan(span);
 }
 
-void TextBuffer::DidMoveCursorBackward() {
+void TextBuffer::DidMoveInsertionPointBackward() {
   std::vector<TextSpan*> displaced;
   across_gap_.swap(displaced);
   while (!before_gap_.empty() && before_gap_.top()->end() >= gap_begin_) {

@@ -181,13 +181,21 @@ void Shell::HandleCharacterInCommandMode(char c) {
 }
 
 void Shell::HandleCharacterInInputMode(char c) {
-  if (c == '\x1b') {
+  if (c == '\x09') {
+    // TODO(abarth): Tab handling.
+    viewport_.InsertCharacter(c);
+  } else if (c == '\x0A' || c == '\x0D') {
+    viewport_.InsertLineBreak();
+  } else if (c == '\x1b') {
     mode_ = Mode::Vi;
-    mark_needs_display();
+  } else if (c >= ' ' && c < '\x7F') {
+    viewport_.InsertCharacter(c);
+  } else if (c == '\x7F') {
+    viewport_.Backspace();
   } else {
-    viewport_.text()->InsertCharacter(c);
-    mark_needs_display();
+    status_ = "Unknown character: " + std::to_string(c);
   }
+  mark_needs_display();
 }
 
 void Shell::ExecuteCommand(const std::string& command) {

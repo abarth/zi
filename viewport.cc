@@ -66,12 +66,48 @@ void Viewport::ScrollBy(int delta) {
     ScrollTo(base_line_ + delta);
 }
 
+void Viewport::InsertCharacter(char c) {
+  text_->InsertCharacter(GetCurrentTextPosition(), c);
+  MoveCursorRight();
+}
+
+void Viewport::InsertLineBreak() {
+  text_->InsertCharacter(GetCurrentTextPosition(), '\n');
+  ++cursor_row_;
+  cursor_col_ = 0;
+  preferred_cursor_col_ = cursor_col_;
+}
+
+void Viewport::Backspace() {
+  size_t position = GetCurrentTextPosition();
+  if (position > 0) {
+    if (cursor_col_ > 0) {
+      --cursor_col_;
+      preferred_cursor_col_ = cursor_col_;
+    } else {
+      // We must not be in the first row because our position is non-zero and
+      // our column is zero.
+      --cursor_row_;
+      cursor_col_ = GetMaxCursorColumn();
+      preferred_cursor_col_ = cursor_col_;
+    }
+    text_->DeleteCharacter(position - 1);
+  } else {
+    term::Put(term::kBell);
+  }
+}
+
+void Viewport::DeleteCharacter() {
+  text_->DeleteCharacter(GetCurrentTextPosition());
+  cursor_col_ = std::min(preferred_cursor_col_, GetMaxCursorColumn());
+  preferred_cursor_col_ = cursor_col_;
+}
+
 void Viewport::MoveCursorLeft() {
   // TODO(abarth): Handle RTL.
   if (cursor_col_ > 0) {
     --cursor_col_;
     preferred_cursor_col_ = cursor_col_;
-    UpdateTextCursor();
   } else {
     term::Put(term::kBell);
   }
@@ -82,7 +118,6 @@ void Viewport::MoveCursorDown() {
     ++cursor_row_;
     EnsureCursorVisible();
     cursor_col_ = std::min(preferred_cursor_col_, GetMaxCursorColumn());
-    UpdateTextCursor();
   } else {
     term::Put(term::kBell);
   }
@@ -93,7 +128,6 @@ void Viewport::MoveCursorUp() {
     --cursor_row_;
     EnsureCursorVisible();
     cursor_col_ = std::min(preferred_cursor_col_, GetMaxCursorColumn());
-    UpdateTextCursor();
   } else {
     term::Put(term::kBell);
   }
@@ -104,7 +138,6 @@ void Viewport::MoveCursorRight() {
   if (cursor_col_ < GetMaxCursorColumn()) {
     ++cursor_col_;
     preferred_cursor_col_ = cursor_col_;
-    UpdateTextCursor();
   } else {
     term::Put(term::kBell);
   }
@@ -128,8 +161,8 @@ size_t Viewport::GetMaxCursorColumn() const {
   return length;
 }
 
-void Viewport::UpdateTextCursor() {
-  text_->MoveCursorTo(GetCurrentLine()->begin() + cursor_col_);
+size_t Viewport::GetCurrentTextPosition() {
+  return GetCurrentLine()->begin() + cursor_col_;
 }
 
 }  // namespace zi

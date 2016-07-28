@@ -43,6 +43,11 @@ class Viewport {
   size_t width() const { return width_; }
   size_t height() const { return height_; }
 
+  void InsertCharacter(char c);
+  void InsertLineBreak();
+  void Backspace();
+  void DeleteCharacter();
+
   void MoveCursorLeft();
   void MoveCursorDown();
   void MoveCursorUp();
@@ -52,7 +57,7 @@ class Viewport {
   TextSpan* GetCurrentLine() const;
   size_t GetMaxCursorColumn() const;
   void EnsureCursorVisible();
-  void UpdateTextCursor();
+  size_t GetCurrentTextPosition();
   void UpdateLines();
 
   std::unique_ptr<TextBuffer> text_;

@@ -29,9 +29,9 @@ TEST(TextBuffer, Find) {
   data.insert(data.end(), text.begin(), text.end());
 
   TextBuffer buffer(std::move(data));
-  buffer.InsertCharacter('x');
-  buffer.InsertCharacter('y');
-  buffer.InsertCharacter('z');
+  buffer.InsertCharacter(0, 'x');
+  buffer.InsertCharacter(1, 'y');
+  buffer.InsertCharacter(2, 'z');
 
   EXPECT_EQ(0u, buffer.Find('x'));
   EXPECT_EQ(1u, buffer.Find('y'));
@@ -54,20 +54,22 @@ TEST(TextBuffer, Insert) {
   data.insert(data.end(), text.begin(), text.end());
 
   TextBuffer buffer(std::move(data));
-  buffer.MoveCursorBy(3);
-  buffer.InsertCharacter('x');
-  buffer.InsertCharacter('y');
-  buffer.InsertCharacter('z');
+  buffer.InsertCharacter(3, 'x');
+  buffer.InsertCharacter(4, 'y');
+  buffer.InsertCharacter(5, 'z');
 
   EXPECT_EQ("Helxyzlo, world", buffer.ToString());
-  buffer.MoveCursorBy(-2);
+  buffer.InsertCharacter(3, 'A');
+  buffer.DeleteCharacter(3);
   EXPECT_EQ("Helxyzlo, world", buffer.ToString());
-  buffer.MoveCursorForward();
+  buffer.InsertCharacter(4, 'A');
+  buffer.DeleteCharacter(4);
   EXPECT_EQ("Helxyzlo, world", buffer.ToString());
-  buffer.MoveCursorBackward();
+  buffer.InsertCharacter(5, 'A');
+  buffer.DeleteCharacter(5);
   EXPECT_EQ("Helxyzlo, world", buffer.ToString());
 
-  buffer.InsertText("four score and seven years ago");
+  buffer.InsertText(4, "four score and seven years ago");
   EXPECT_EQ("Helxfour score and seven years agoyzlo, world", buffer.ToString());
 }
 
@@ -77,10 +79,9 @@ TEST(TextBuffer, Span) {
   data.insert(data.end(), text.begin(), text.end());
 
   TextBuffer buffer(std::move(data));
-  buffer.MoveCursorBy(3);
-  buffer.InsertCharacter('x');
-  buffer.InsertCharacter('y');
-  buffer.InsertCharacter('z');
+  buffer.InsertCharacter(3, 'x');
+  buffer.InsertCharacter(4, 'y');
+  buffer.InsertCharacter(5, 'z');
 
   auto check = [&buffer](size_t begin, size_t end, std::string first,
                          std::string second) {

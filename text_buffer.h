@@ -32,20 +32,12 @@ class TextBuffer {
   explicit TextBuffer(std::vector<char> text);
   ~TextBuffer();
 
-  void InsertCharacter(char c);
-  void InsertText(std::string text);
-  void DeleteCharacter();
-
-  void MoveCursorForward();
-  void MoveCursorBackward();
-
-  void MoveCursorBy(int offset);
-  void MoveCursorTo(size_t position);
+  void InsertCharacter(size_t position, char c);
+  void InsertText(size_t position, std::string text);
+  void DeleteCharacter(size_t position);
 
   // Returns std::string::npos if |c| is not found.
   size_t Find(char c, size_t pos = 0);
-
-  size_t cursor_position() const { return gap_begin_; }
 
   bool is_empty() const { return size() == 0u; }
   size_t size() const { return buffer_.size() - gap_size(); }
@@ -63,11 +55,15 @@ class TextBuffer {
   }
 
  private:
+  void MoveInsertionPointTo(size_t position);
+  void MoveInsertionPointForward(size_t offset);
+  void MoveInsertionPointBackward(size_t offset);
+  void DidMoveInsertionPointForward();
+  void DidMoveInsertionPointBackward();
+
   void Expand(size_t required_gap_size);
   void DidInsert(size_t count);
   void DidDelete(size_t count);
-  void DidMoveCursorForward();
-  void DidMoveCursorBackward();
 
   const char* data() const { return &buffer_[0]; }
   size_t gap_size() const { return gap_end_ - gap_begin_; }
