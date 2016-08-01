@@ -168,19 +168,23 @@ int Shell::Run() {
 void Shell::HandleCharacterInViMode(char c) {
   switch (c) {
     case 'h':
-      viewport_.MoveCursorLeft();
+      if (!viewport_.MoveCursorLeft())
+        term::Put(term::kBell);
       mark_needs_display();
       break;
     case 'j':
-      viewport_.MoveCursorDown();
+      if (!viewport_.MoveCursorDown())
+        term::Put(term::kBell);
       mark_needs_display();
       break;
     case 'k':
-      viewport_.MoveCursorUp();
+      if (!viewport_.MoveCursorUp())
+        term::Put(term::kBell);
       mark_needs_display();
       break;
     case 'l':
-      viewport_.MoveCursorRight();
+      if (!viewport_.MoveCursorRight())
+        term::Put(term::kBell);
       mark_needs_display();
       break;
     case 'i':
@@ -227,7 +231,8 @@ void Shell::HandleCharacterInInputMode(char c) {
   } else if (c >= ' ' && c < '\x7F') {
     viewport_.InsertCharacter(c);
   } else if (c == '\x7F') {
-    viewport_.Backspace();
+    if (!viewport_.Backspace())
+      term::Put(term::kBell);
   } else {
     status_ = "Unknown character: " + std::to_string(c);
   }

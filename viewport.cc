@@ -68,79 +68,68 @@ void Viewport::ScrollBy(int delta) {
 
 void Viewport::InsertCharacter(char c) {
   text_->InsertCharacter(GetCurrentTextPosition(), c);
-  MoveCursorRight();
+  SetCursorColumn(cursor_col_ + 1);
 }
 
 void Viewport::InsertLineBreak() {
   text_->InsertCharacter(GetCurrentTextPosition(), '\n');
   ++cursor_row_;
-  cursor_col_ = 0;
-  preferred_cursor_col_ = cursor_col_;
+  SetCursorColumn(0);
 }
 
-void Viewport::Backspace() {
+bool Viewport::Backspace() {
   size_t position = GetCurrentTextPosition();
   if (position > 0) {
     if (cursor_col_ > 0) {
-      --cursor_col_;
-      preferred_cursor_col_ = cursor_col_;
+      SetCursorColumn(cursor_col_ - 1);
     } else {
       // We must not be in the first row because our position is non-zero and
       // our column is zero.
       --cursor_row_;
-      cursor_col_ = GetMaxCursorColumn();
-      preferred_cursor_col_ = cursor_col_;
+      SetCursorColumn(GetMaxCursorColumn());
     }
     text_->DeleteCharacter(position - 1);
-  } else {
-    term::Put(term::kBell);
+    return true;
   }
+  return false;
 }
 
-void Viewport::DeleteCharacter() {
-  text_->DeleteCharacter(GetCurrentTextPosition());
-  cursor_col_ = std::min(preferred_cursor_col_, GetMaxCursorColumn());
-  preferred_cursor_col_ = cursor_col_;
-}
-
-void Viewport::MoveCursorLeft() {
+bool Viewport::MoveCursorLeft() {
   // TODO(abarth): Handle RTL.
   if (cursor_col_ > 0) {
-    --cursor_col_;
-    preferred_cursor_col_ = cursor_col_;
-  } else {
-    term::Put(term::kBell);
+    SetCursorColumn(cursor_col_ - 1);
+    return true;
   }
+  return false;
 }
 
-void Viewport::MoveCursorDown() {
+bool Viewport::MoveCursorDown() {
   if (cursor_row_ + 1 < lines_.size()) {
     ++cursor_row_;
     EnsureCursorVisible();
     cursor_col_ = std::min(preferred_cursor_col_, GetMaxCursorColumn());
-  } else {
-    term::Put(term::kBell);
+    return true;
   }
+  return false;
 }
 
-void Viewport::MoveCursorUp() {
+bool Viewport::MoveCursorUp() {
   if (cursor_row_ > 0) {
     --cursor_row_;
     EnsureCursorVisible();
     cursor_col_ = std::min(preferred_cursor_col_, GetMaxCursorColumn());
-  } else {
-    term::Put(term::kBell);
+    return true;
   }
+  return false;
 }
 
-void Viewport::MoveCursorRight() {
+bool Viewport::MoveCursorRight() {
   // TODO(abarth): Handle RTL.
   if (cursor_col_ < GetMaxCursorColumn()) {
-    ++cursor_col_;
-    preferred_cursor_col_ = cursor_col_;
-  } else {
-    term::Put(term::kBell);
+    SetCursorColumn(cursor_col_ + 1);
+    return true;
   }
+  return false;
 }
 
 void Viewport::EnsureCursorVisible() {
@@ -163,6 +152,11 @@ size_t Viewport::GetMaxCursorColumn() const {
 
 size_t Viewport::GetCurrentTextPosition() {
   return GetCurrentLine()->begin() + cursor_col_;
+}
+
+void Viewport::SetCursorColumn(size_t column) {
+  cursor_col_ = column;
+  preferred_cursor_col_ = column;
 }
 
 }  // namespace zi

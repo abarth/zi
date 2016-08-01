@@ -45,13 +45,12 @@ class Viewport {
 
   void InsertCharacter(char c);
   void InsertLineBreak();
-  void Backspace();
-  void DeleteCharacter();
+  bool Backspace();
 
-  void MoveCursorLeft();
-  void MoveCursorDown();
-  void MoveCursorUp();
-  void MoveCursorRight();
+  bool MoveCursorLeft();
+  bool MoveCursorDown();
+  bool MoveCursorUp();
+  bool MoveCursorRight();
 
  private:
   TextSpan* GetCurrentLine() const;
@@ -59,6 +58,8 @@ class Viewport {
   void EnsureCursorVisible();
   size_t GetCurrentTextPosition();
   void UpdateLines();
+
+  void SetCursorColumn(size_t column);
 
   std::unique_ptr<TextBuffer> text_;
   LineTracker lines_;
