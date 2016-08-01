@@ -25,10 +25,10 @@
 
 namespace zi {
 
-class Viewport {
+class Editor {
  public:
-  Viewport();
-  ~Viewport();
+  Editor();
+  ~Editor();
 
   void SetText(std::unique_ptr<TextBuffer> text);
 
@@ -73,7 +73,7 @@ class Viewport {
   size_t cursor_row_ = 0;
   size_t preferred_cursor_col_ = 0;
 
-  DISALLOW_COPY_AND_ASSIGN(Viewport);
+  DISALLOW_COPY_AND_ASSIGN(Editor);
 };
 
 }  // namespace zi

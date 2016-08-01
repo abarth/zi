@@ -16,6 +16,8 @@ source_set("lib") {
   sources = [
     "command_buffer.cc",
     "command_buffer.h",
+    "editor.cc",
+    "editor.h",
     "line_tracker.cc",
     "line_tracker.h",
     "macros.h",
@@ -27,12 +29,10 @@ source_set("lib") {
     "term.h",
     "text_buffer.cc",
     "text_buffer.h",
+    "text_span_queue.h",
     "text_span.cc",
     "text_span.h",
-    "text_span_queue.h",
     "vector_extensions.h",
-    "viewport.cc",
-    "viewport.h",
   ]
 }
 

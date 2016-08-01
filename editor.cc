@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "viewport.h"
+#include "editor.h"
 
 #include <algorithm>
 #include <utility>
@@ -21,16 +21,16 @@
 
 namespace zi {
 
-Viewport::Viewport() {}
+Editor::Editor() {}
 
-Viewport::~Viewport() {}
+Editor::~Editor() {}
 
-void Viewport::SetText(std::unique_ptr<TextBuffer> text) {
+void Editor::SetText(std::unique_ptr<TextBuffer> text) {
   text_ = std::move(text);
   lines_.Clear();
 }
 
-void Viewport::Display(CommandBuffer* commands) {
+void Editor::Display(CommandBuffer* commands) {
   lines_.UpdateLines(text_.get());
   for (size_t i = 0; i < lines_.size(); ++i) {
     commands->MoveCursorTo(0, i);
@@ -46,38 +46,38 @@ void Viewport::Display(CommandBuffer* commands) {
   }
 }
 
-void Viewport::UpdateCursor(CommandBuffer* commands) {
+void Editor::UpdateCursor(CommandBuffer* commands) {
   commands->MoveCursorTo(cursor_col_, cursor_row_ - base_line_);
 }
 
-void Viewport::Resize(size_t width, size_t height) {
+void Editor::Resize(size_t width, size_t height) {
   width_ = width;
   height_ = height;
 }
 
-void Viewport::ScrollTo(size_t line) {
+void Editor::ScrollTo(size_t line) {
   base_line_ = line;
 }
 
-void Viewport::ScrollBy(int delta) {
+void Editor::ScrollBy(int delta) {
   if (delta < 0)
     ScrollTo(base_line_ - std::min(base_line_, static_cast<size_t>(-delta)));
   else
     ScrollTo(base_line_ + delta);
 }
 
-void Viewport::InsertCharacter(char c) {
+void Editor::InsertCharacter(char c) {
   text_->InsertCharacter(GetCurrentTextPosition(), c);
   SetCursorColumn(cursor_col_ + 1);
 }
 
-void Viewport::InsertLineBreak() {
+void Editor::InsertLineBreak() {
   text_->InsertCharacter(GetCurrentTextPosition(), '\n');
   ++cursor_row_;
   SetCursorColumn(0);
 }
 
-bool Viewport::Backspace() {
+bool Editor::Backspace() {
   size_t position = GetCurrentTextPosition();
   if (position > 0) {
     if (cursor_col_ > 0) {
@@ -94,7 +94,7 @@ bool Viewport::Backspace() {
   return false;
 }
 
-bool Viewport::MoveCursorLeft() {
+bool Editor::MoveCursorLeft() {
   // TODO(abarth): Handle RTL.
   if (cursor_col_ > 0) {
     SetCursorColumn(cursor_col_ - 1);
@@ -103,7 +103,7 @@ bool Viewport::MoveCursorLeft() {
   return false;
 }
 
-bool Viewport::MoveCursorDown() {
+bool Editor::MoveCursorDown() {
   if (cursor_row_ + 1 < lines_.size()) {
     ++cursor_row_;
     EnsureCursorVisible();
@@ -113,7 +113,7 @@ bool Viewport::MoveCursorDown() {
   return false;
 }
 
-bool Viewport::MoveCursorUp() {
+bool Editor::MoveCursorUp() {
   if (cursor_row_ > 0) {
     --cursor_row_;
     EnsureCursorVisible();
@@ -123,7 +123,7 @@ bool Viewport::MoveCursorUp() {
   return false;
 }
 
-bool Viewport::MoveCursorRight() {
+bool Editor::MoveCursorRight() {
   // TODO(abarth): Handle RTL.
   if (cursor_col_ < GetMaxCursorColumn()) {
     SetCursorColumn(cursor_col_ + 1);
@@ -132,29 +132,29 @@ bool Viewport::MoveCursorRight() {
   return false;
 }
 
-void Viewport::EnsureCursorVisible() {
+void Editor::EnsureCursorVisible() {
   if (cursor_row_ < base_line_)
     ScrollTo(cursor_row_);
   else if (cursor_row_ > base_line_ + height_)
     ScrollTo(cursor_row_ - height_ + 1);
 }
 
-TextSpan* Viewport::GetCurrentLine() const {
+TextSpan* Editor::GetCurrentLine() const {
   return lines_.GetLine(cursor_row_);
 }
 
-size_t Viewport::GetMaxCursorColumn() const {
+size_t Editor::GetMaxCursorColumn() const {
   size_t length = GetCurrentLine()->length();
   if (length > 0)
     length -= 1;
   return length;
 }
 
-size_t Viewport::GetCurrentTextPosition() {
+size_t Editor::GetCurrentTextPosition() {
   return GetCurrentLine()->begin() + cursor_col_;
 }
 
-void Viewport::SetCursorColumn(size_t column) {
+void Editor::SetCursorColumn(size_t column) {
   cursor_col_ = column;
   preferred_cursor_col_ = column;
 }

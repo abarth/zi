@@ -28,7 +28,7 @@
 #include "scoped_fd.h"
 #include "term.h"
 #include "text_buffer.h"
-#include "viewport.h"
+#include "editor.h"
 
 namespace zi {
 
@@ -111,7 +111,7 @@ class Shell {
   std::string path_;
   Mode mode_ = Mode::Vi;
   std::string status_;
-  Viewport viewport_;
+  Editor editor_;
 
   bool should_quit_ = false;
   bool needs_display_ = false;
@@ -122,7 +122,7 @@ class Shell {
 Shell::Shell() {
   term::Put(term::kSaveScreen);
   term::Put(term::kMoveCursorHome);
-  viewport_.Resize(term::cols, term::rows);
+  editor_.Resize(term::cols, term::rows);
 }
 
 Shell::~Shell() {
@@ -131,12 +131,12 @@ Shell::~Shell() {
 
 void Shell::OpenFile(const std::string& path) {
   std::unique_ptr<TextBuffer> text(new TextBuffer(ReadFile(path)));
-  viewport_.SetText(std::move(text));
+  editor_.SetText(std::move(text));
   path_ = std::move(path);
 }
 
 void Shell::Save() {
-  WriteAtomically(path_, viewport_.text()->GetText());
+  WriteAtomically(path_, editor_.text()->GetText());
 }
 
 int Shell::Run() {
@@ -168,22 +168,22 @@ int Shell::Run() {
 void Shell::HandleCharacterInViMode(char c) {
   switch (c) {
     case 'h':
-      if (!viewport_.MoveCursorLeft())
+      if (!editor_.MoveCursorLeft())
         term::Put(term::kBell);
       mark_needs_display();
       break;
     case 'j':
-      if (!viewport_.MoveCursorDown())
+      if (!editor_.MoveCursorDown())
         term::Put(term::kBell);
       mark_needs_display();
       break;
     case 'k':
-      if (!viewport_.MoveCursorUp())
+      if (!editor_.MoveCursorUp())
         term::Put(term::kBell);
       mark_needs_display();
       break;
     case 'l':
-      if (!viewport_.MoveCursorRight())
+      if (!editor_.MoveCursorRight())
         term::Put(term::kBell);
       mark_needs_display();
       break;
@@ -223,15 +223,15 @@ void Shell::HandleCharacterInCommandMode(char c) {
 void Shell::HandleCharacterInInputMode(char c) {
   if (c == '\x09') {
     // TODO(abarth): Tab handling.
-    viewport_.InsertCharacter(c);
+    editor_.InsertCharacter(c);
   } else if (c == '\x0A' || c == '\x0D') {
-    viewport_.InsertLineBreak();
+    editor_.InsertLineBreak();
   } else if (c == '\x1b') {
     mode_ = Mode::Vi;
   } else if (c >= ' ' && c < '\x7F') {
-    viewport_.InsertCharacter(c);
+    editor_.InsertCharacter(c);
   } else if (c == '\x7F') {
-    if (!viewport_.Backspace())
+    if (!editor_.Backspace())
       term::Put(term::kBell);
   } else {
     status_ = "Unknown character: " + std::to_string(c);
@@ -252,10 +252,10 @@ void Shell::ExecuteCommand(const std::string& command) {
 void Shell::Display() {
   CommandBuffer commands;
   commands << term::kEraseScreen;
-  viewport_.Display(&commands);
+  editor_.Display(&commands);
   commands.MoveCursorTo(0, term::rows - 1);
   commands << status_ << term::kEraseToEndOfLine;
-  viewport_.UpdateCursor(&commands);
+  editor_.UpdateCursor(&commands);
   commands.Execute();
 }
 
