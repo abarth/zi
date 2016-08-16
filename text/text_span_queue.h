@@ -38,7 +38,7 @@ class TextSpanQueue
 
   template <typename Iterator>
   void Erase(Iterator begin, Iterator end) {
-    if (EraseAllValues(this->c, begin, end))
+    if (EraseAllValues(&this->c, begin, end))
       std::make_heap(this->c.begin(), this->c.end(), this->comp);
   }
 };

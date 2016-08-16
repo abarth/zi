@@ -19,18 +19,18 @@
 namespace zi {
 
 template <typename T>
-bool EraseValue(const std::vector<T> vector, const T& value) {
-  auto end = vector.end();
-  auto it = std::find(vector.begin(), end, value);
+bool EraseValue(std::vector<T>* vector, const T& value) {
+  auto end = vector->end();
+  auto it = std::find(vector->begin(), end, value);
   if (it != end) {
-    vector.erase(it);
+    vector->erase(it);
     return true;
   }
   return false;
 }
 
 template <typename T, typename Iterator>
-bool EraseAllValues(const std::vector<T> vector, Iterator begin, Iterator end) {
+bool EraseAllValues(std::vector<T>* vector, Iterator begin, Iterator end) {
   bool modified = false;
   for (Iterator it = begin; it != end; ++it) {
     if (EraseValue(vector, *it))
