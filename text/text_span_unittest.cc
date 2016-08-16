@@ -75,30 +75,30 @@ TEST(TextSpan, Control) {
   EXPECT_FALSE(span.is_dirty());
 
   span.PopFront(7);
-  EXPECT_EQ(8u, span.begin());
-  EXPECT_EQ(8u, span.end());
+  EXPECT_EQ(9u, span.begin());
+  EXPECT_EQ(9u, span.end());
   EXPECT_TRUE(span.is_dirty());
   EXPECT_TRUE(span.is_empty());
   span.MarkClean();
   EXPECT_FALSE(span.is_dirty());
 
   span.PushBack(5);
-  EXPECT_EQ(8u, span.begin());
-  EXPECT_EQ(13u, span.end());
+  EXPECT_EQ(9u, span.begin());
+  EXPECT_EQ(14u, span.end());
   EXPECT_TRUE(span.is_dirty());
   span.MarkClean();
   EXPECT_FALSE(span.is_dirty());
 
   span.PopBack(4);
-  EXPECT_EQ(8u, span.begin());
-  EXPECT_EQ(9u, span.end());
+  EXPECT_EQ(9u, span.begin());
+  EXPECT_EQ(10u, span.end());
   EXPECT_TRUE(span.is_dirty());
   span.MarkClean();
   EXPECT_FALSE(span.is_dirty());
 
   span.PopBack(4);
-  EXPECT_EQ(8u, span.begin());
-  EXPECT_EQ(8u, span.end());
+  EXPECT_EQ(6u, span.begin());
+  EXPECT_EQ(6u, span.end());
   EXPECT_TRUE(span.is_dirty());
   span.MarkClean();
   EXPECT_FALSE(span.is_dirty());

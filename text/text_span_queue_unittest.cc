@@ -53,5 +53,17 @@ TEST(TextSpanQueue, Control) {
   EXPECT_EQ(4u, queue.top()->begin());
 }
 
+TEST(TextSpanQueue, AscendingByEnd) {
+  TextSpanQueue<TextSpan::AscendingByEnd> queue;
+  TextSpan a(1, 10);
+  TextSpan b(2, 9);
+  TextSpan c(3, 11);
+
+  queue.push(&a);
+  queue.push(&b);
+  queue.push(&c);
+  EXPECT_EQ(11u, queue.top()->end());
+}
+
 }  // namespace
 }  // namespace zi

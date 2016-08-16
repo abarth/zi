@@ -21,9 +21,17 @@
 namespace zi {
 namespace {
 
-TEST(StringView, Control) {
-  EXPECT_TRUE(StringView().is_empty());
+TEST(StringView, Default) {
+  StringView view;
+  EXPECT_TRUE(view.is_empty());
+  EXPECT_EQ(0u, view.length());
+  EXPECT_EQ(nullptr, view.begin());
+  EXPECT_EQ(nullptr, view.end());
+  EXPECT_EQ(nullptr, view.data());
+  EXPECT_EQ("", view.ToString());
+}
 
+TEST(StringView, Control) {
   std::string text = "Hello, world";
   StringView view(text);
   EXPECT_EQ(text.data(), view.data());

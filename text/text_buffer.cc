@@ -19,6 +19,10 @@
 #include <algorithm>
 #include <utility>
 
+#ifndef NDEBUG
+#include <iostream>
+#endif
+
 namespace zi {
 
 TextBuffer::TextBuffer() {}
@@ -50,6 +54,8 @@ void TextBuffer::InsertText(size_t position, std::string text) {
 }
 
 void TextBuffer::DeleteCharacter(size_t position) {
+  if (position >= size())
+    return;
   MoveInsertionPointTo(position + 1);
   --gap_begin_;
   DidDelete(1);
@@ -136,13 +142,35 @@ TextView TextBuffer::GetTextForSpan(TextSpan* span) const {
 }
 
 void TextBuffer::AddSpan(TextSpan* span) {
-  if (span->end() < gap_begin_)
+  if (span->end() <= gap_begin_)
     before_gap_.push(span);
-  else if (span->begin() >= gap_end_)
+  else if (span->begin() >= gap_begin_)
     after_gap_.push(span);
   else
     across_gap_.push_back(span);
 }
+
+#ifndef NDEBUG
+
+static void DebugDumpTextSpanVector(const std::vector<TextSpan*>& spans) {
+  for (auto& span : spans) {
+    std::cout << "begin=" << span->begin() << " end=" << span->end()
+              << std::endl;
+  }
+}
+
+void TextBuffer::DebugDumpSpans() {
+  std::cout << "gap_begin=" << gap_begin_ << " gap_end=" << gap_end_
+            << " size=" << buffer_.size() << std::endl;
+  std::cout << "== Before gap ==" << std::endl;
+  DebugDumpTextSpanVector(before_gap_.debug_container());
+  std::cout << "== Across gap ==" << std::endl;
+  DebugDumpTextSpanVector(across_gap_);
+  std::cout << "== After gap ==" << std::endl;
+  DebugDumpTextSpanVector(after_gap_.debug_container());
+}
+
+#endif
 
 void TextBuffer::Expand(size_t required_gap_size) {
   size_t existing_gap = gap_size();
@@ -168,6 +196,12 @@ void TextBuffer::DidInsert(size_t count) {
 }
 
 void TextBuffer::DidDelete(size_t count) {
+  while (!before_gap_.empty()) {
+    TextSpan* span = before_gap_.top();
+    if (span->end() <= gap_begin_)
+      break;
+    span->PopBack(gap_begin_ - span->end());
+  }
   for (auto& span : across_gap_)
     span->PopBack(count);
   after_gap_.ShiftBackward(count);
@@ -176,8 +210,10 @@ void TextBuffer::DidDelete(size_t count) {
 void TextBuffer::DidMoveInsertionPointForward() {
   std::vector<TextSpan*> displaced;
   across_gap_.swap(displaced);
-  while (!after_gap_.empty() && after_gap_.top()->begin() < gap_end_) {
+  while (!after_gap_.empty()) {
     TextSpan* span = after_gap_.top();
+    if (span->begin() >= gap_begin_)
+      break;
     after_gap_.pop();
     displaced.push_back(span);
   }
@@ -189,8 +225,10 @@ void TextBuffer::DidMoveInsertionPointForward() {
 void TextBuffer::DidMoveInsertionPointBackward() {
   std::vector<TextSpan*> displaced;
   across_gap_.swap(displaced);
-  while (!before_gap_.empty() && before_gap_.top()->end() >= gap_begin_) {
+  while (!before_gap_.empty()) {
     TextSpan* span = before_gap_.top();
+    if (span->end() <= gap_begin_)
+      break;
     before_gap_.pop();
     displaced.push_back(span);
   }

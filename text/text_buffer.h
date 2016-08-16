@@ -56,6 +56,10 @@ class TextBuffer {
     after_gap_.Erase(begin, end);
   }
 
+#ifndef NDEBUG
+  void DebugDumpSpans();
+#endif
+
  private:
   void MoveInsertionPointTo(size_t position);
   void MoveInsertionPointForward(size_t offset);

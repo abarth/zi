@@ -41,6 +41,10 @@ class TextSpanQueue
     if (EraseAllValues(&this->c, begin, end))
       std::make_heap(this->c.begin(), this->c.end(), this->comp);
   }
+
+#ifndef NDEBUG
+  const std::vector<TextSpan*>& debug_container() const { return this->c; }
+#endif
 };
 
 }  // namespace zi

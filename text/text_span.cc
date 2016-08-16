@@ -43,12 +43,14 @@ void TextSpan::PushBack(size_t count) {
 }
 
 void TextSpan::PopFront(size_t count) {
-  begin_ += std::min(count, length());
+  begin_ += count;
+  end_ = std::max(begin_, end_);
   MarkDirty();
 }
 
 void TextSpan::PopBack(size_t count) {
-  end_ -= std::min(count, length());
+  end_ -= std::min(count, end_);
+  begin_ = std::min(begin_, end_);
   MarkDirty();
 }
 
