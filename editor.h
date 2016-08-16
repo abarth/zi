@@ -22,6 +22,7 @@
 #include "macros.h"
 #include "text_buffer.h"
 #include "text_span.h"
+#include "cursor_mode.h"
 
 namespace zi {
 
@@ -47,6 +48,8 @@ class Editor {
   void InsertLineBreak();
   bool Backspace();
 
+  void SetCursorMode(CursorMode mode);
+
   bool MoveCursorLeft();
   bool MoveCursorDown();
   bool MoveCursorUp();
@@ -69,6 +72,7 @@ class Editor {
 
   size_t base_line_ = 0;
 
+  CursorMode cursor_mode_ = CursorMode::Block;
   size_t cursor_col_ = 0;
   size_t cursor_row_ = 0;
   size_t preferred_cursor_col_ = 0;

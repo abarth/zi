@@ -94,6 +94,11 @@ bool Editor::Backspace() {
   return false;
 }
 
+void Editor::SetCursorMode(CursorMode mode) {
+  cursor_mode_ = mode;
+  cursor_col_ = std::min(cursor_col_, GetMaxCursorColumn());
+}
+
 bool Editor::MoveCursorLeft() {
   // TODO(abarth): Handle RTL.
   if (cursor_col_ > 0) {
@@ -145,7 +150,7 @@ TextSpan* Editor::GetCurrentLine() const {
 
 size_t Editor::GetMaxCursorColumn() const {
   size_t length = GetCurrentLine()->length();
-  if (length > 0)
+  if (length > 0 && cursor_mode_ == CursorMode::Block)
     length -= 1;
   return length;
 }
