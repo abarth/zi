@@ -14,40 +14,30 @@
 
 #pragma once
 
-#include <sstream>
-#include <utility>
-
-#include "term.h"
 #include "text/string_view.h"
-#include "text/text_view.h"
-#include "zen/macros.h"
 
 namespace zi {
 
-class CommandBuffer {
+class TextView {
  public:
-  CommandBuffer();
-  ~CommandBuffer();
+  TextView();
+  TextView(const std::string& string);
+  TextView(const StringView& string_view);
+  TextView(const StringView& left, const StringView& right);
+  ~TextView();
 
-  CommandBuffer& operator<<(const StringView& text);
-  CommandBuffer& operator<<(const TextView& text);
+  size_t length() const { return left_.length() + right_.length(); }
 
-  template <typename T>
-  CommandBuffer& operator<<(const T& value) {
-    stream_ << value;
-    return *this;
-  }
+  const StringView& left() const { return left_; }
+  const StringView& right() const { return right_; }
 
-  void Write(const char* buffer, size_t length);
-  void MoveCursorTo(int x, int y);
-  void SetForegroundColor(term::Color color);
-  void SetBackgroundColor(term::Color color);
-  void Execute();
+  bool is_empty() const { return left_.is_empty() && right_.is_empty(); }
+
+  std::string ToString() const;
 
  private:
-  std::ostringstream stream_;
-
-  DISALLOW_COPY_AND_ASSIGN(CommandBuffer);
+  const StringView left_;
+  const StringView right_;
 };
 
 }  // namespace zi

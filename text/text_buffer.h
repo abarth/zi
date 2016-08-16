@@ -15,12 +15,12 @@
 #pragma once
 
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "text/string_view.h"
 #include "text/text_span_queue.h"
 #include "text/text_span.h"
+#include "text/text_view.h"
 #include "zen/macros.h"
 #include "zen/vector_extensions.h"
 
@@ -33,18 +33,19 @@ class TextBuffer {
   ~TextBuffer();
 
   void InsertCharacter(size_t position, char c);
+  void InsertText(size_t position, StringView text);
   void InsertText(size_t position, std::string text);
   void DeleteCharacter(size_t position);
 
   // Returns std::string::npos if |c| is not found.
-  size_t Find(char c, size_t pos = 0);
+  size_t Find(char c, size_t pos = 0u);
 
   bool is_empty() const { return size() == 0u; }
   size_t size() const { return buffer_.size() - gap_size(); }
 
   std::string ToString() const;
-  std::pair<StringView, StringView> GetText() const;
-  std::pair<StringView, StringView> GetTextForSpan(TextSpan* span) const;
+  TextView GetText() const;
+  TextView GetTextForSpan(TextSpan* span) const;
 
   void AddSpan(TextSpan* span);
 
@@ -66,8 +67,9 @@ class TextBuffer {
   void DidInsert(size_t count);
   void DidDelete(size_t count);
 
-  const char* data() const { return &buffer_[0]; }
+  const char* data() const { return buffer_.data(); }
   size_t gap_size() const { return gap_end_ - gap_begin_; }
+  size_t tail_size() const { return buffer_.size() - gap_end_; }
 
   size_t gap_begin_ = 0;
   size_t gap_end_ = 0;

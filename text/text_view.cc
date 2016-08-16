@@ -12,42 +12,31 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#pragma once
-
-#include <sstream>
-#include <utility>
-
-#include "term.h"
-#include "text/string_view.h"
 #include "text/text_view.h"
-#include "zen/macros.h"
 
 namespace zi {
 
-class CommandBuffer {
- public:
-  CommandBuffer();
-  ~CommandBuffer();
+TextView::TextView() {}
 
-  CommandBuffer& operator<<(const StringView& text);
-  CommandBuffer& operator<<(const TextView& text);
+TextView::TextView(const std::string& string) : left_(string) {}
 
-  template <typename T>
-  CommandBuffer& operator<<(const T& value) {
-    stream_ << value;
-    return *this;
-  }
+TextView::TextView(const StringView& string_view) : left_(string_view) {}
 
-  void Write(const char* buffer, size_t length);
-  void MoveCursorTo(int x, int y);
-  void SetForegroundColor(term::Color color);
-  void SetBackgroundColor(term::Color color);
-  void Execute();
+TextView::TextView(const StringView& left, const StringView& right)
+    : left_(left), right_(right) {}
 
- private:
-  std::ostringstream stream_;
+TextView::~TextView() {}
 
-  DISALLOW_COPY_AND_ASSIGN(CommandBuffer);
-};
+std::string TextView::ToString() const {
+  std::string result;
+  const size_t left_length = left_.length();
+  const size_t right_length = right_.length();
+  result.resize(left_length + right_length);
+  if (left_length)
+    result.replace(0, left_length, left_.data(), left_length);
+  if (right_length)
+    result.replace(left_length, right_length, right_.data(), right_length);
+  return result;
+}
 
 }  // namespace zi

@@ -21,17 +21,13 @@ CommandBuffer::CommandBuffer() {}
 CommandBuffer::~CommandBuffer() {}
 
 CommandBuffer& CommandBuffer::operator<<(const StringView& text) {
-  Write(text.data(), text.length());
+  if (!text.is_empty())
+    Write(text.data(), text.length());
   return *this;
 }
 
-CommandBuffer& CommandBuffer::operator<<(
-    std::pair<StringView, StringView> text) {
-  if (!text.first.is_empty())
-    Write(text.first.data(), text.first.length());
-  if (!text.second.is_empty())
-    Write(text.second.data(), text.second.length());
-  return *this;
+CommandBuffer& CommandBuffer::operator<<(const TextView& text) {
+  return *this << text.left() << text.right();
 }
 
 void CommandBuffer::Write(const char* buffer, size_t length) {

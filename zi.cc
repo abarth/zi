@@ -62,19 +62,20 @@ bool WriteFileDescriptor(int fd, const char* data, ssize_t size) {
 }
 
 bool WriteStringViewToFileDescriptor(int fd, StringView string_view) {
+  if (string_view.is_empty())
+    return true;
   return WriteFileDescriptor(fd, string_view.begin(), string_view.length());
 }
 
-bool WriteAtomically(const std::string& path,
-                     std::pair<StringView, StringView> text) {
+bool WriteAtomically(const std::string& path, TextView text) {
   // TODO(abarth): We should open this file at the start and hold onto it.
   std::string temp_path = path + ".swp";
   ScopedFD fd(HANDLE_EINTR(creat(temp_path.c_str(), 0666)));
   // TODO(abarth): Add an error reporting mechanism.
   if (!fd.is_valid())
     return false;
-  if (!WriteStringViewToFileDescriptor(fd.get(), text.first) ||
-      !WriteStringViewToFileDescriptor(fd.get(), text.second)) {
+  if (!WriteStringViewToFileDescriptor(fd.get(), text.left()) ||
+      !WriteStringViewToFileDescriptor(fd.get(), text.right())) {
     unlink(temp_path.c_str());
     return false;
   }

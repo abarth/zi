@@ -39,6 +39,8 @@ executable("zi") {
 
   deps = [
     ":lib",
+    "text",
+    "zen",
   ]
 }
 

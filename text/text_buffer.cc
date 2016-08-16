@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <utility>
 
 namespace zi {
 
@@ -34,7 +35,7 @@ void TextBuffer::InsertCharacter(size_t position, char c) {
   DidInsert(1);
 }
 
-void TextBuffer::InsertText(size_t position, std::string text) {
+void TextBuffer::InsertText(size_t position, StringView text) {
   const size_t length = text.length();
   if (gap_begin_ + length > gap_end_)
     Expand(length);
@@ -42,6 +43,10 @@ void TextBuffer::InsertText(size_t position, std::string text) {
   memcpy(&buffer_[gap_begin_], text.data(), length);
   gap_begin_ += length;
   DidInsert(length);
+}
+
+void TextBuffer::InsertText(size_t position, std::string text) {
+  InsertText(position, StringView(text));
 }
 
 void TextBuffer::DeleteCharacter(size_t position) {
@@ -95,30 +100,29 @@ std::string TextBuffer::ToString() const {
   std::string result;
   result.resize(size());
   if (gap_begin_ > 0)
-    memcpy(&result[0], data(), gap_begin_);
-  if (gap_end_ < buffer_.size())
-    memcpy(&result[gap_begin_], &buffer_[gap_end_], buffer_.size() - gap_end_);
+    result.replace(0, gap_begin_, data(), gap_begin_);
+  if (gap_end_ < buffer_.size()) {
+    const size_t tail_size = this->tail_size();
+    result.replace(gap_begin_, tail_size, &buffer_[gap_end_], tail_size);
+  }
   return result;
 }
 
-std::pair<StringView, StringView> TextBuffer::GetText() const {
+TextView TextBuffer::GetText() const {
   const char* data = buffer_.data();
-  return std::make_pair(StringView(data, data + gap_begin_),
-                        StringView(data + gap_end_, data + buffer_.size()));
+  return TextView(StringView(data, data + gap_begin_),
+                  StringView(data + gap_end_, data + buffer_.size()));
 }
 
-std::pair<StringView, StringView> TextBuffer::GetTextForSpan(
-    TextSpan* span) const {
+TextView TextBuffer::GetTextForSpan(TextSpan* span) const {
   if (span->end() <= gap_begin_) {
     const char* begin = &buffer_[span->begin()];
-    return std::make_pair(StringView(begin, begin + span->length()),
-                          StringView());
+    return TextView(StringView(begin, begin + span->length()));
   } else if (span->begin() >= gap_begin_) {
     const char* begin = &buffer_[span->begin() + gap_size()];
     // TODO(abarth): Should we handle the case where the span extends beyond the
     // buffer?
-    return std::make_pair(StringView(),
-                          StringView(begin, begin + span->length()));
+    return TextView(StringView(begin, begin + span->length()));
   } else {
     // The span crosses the gap.
     const char* first_begin = &buffer_[span->begin()];
@@ -126,8 +130,8 @@ std::pair<StringView, StringView> TextBuffer::GetTextForSpan(
     const size_t first_length = first_end - first_begin;
     const char* second_begin = &buffer_[gap_end_];
     const char* second_end = second_begin + (span->length() - first_length);
-    return std::make_pair(StringView(first_begin, first_end),
-                          StringView(second_begin, second_end));
+    return TextView(StringView(first_begin, first_end),
+                    StringView(second_begin, second_end));
   }
 }
 
@@ -149,7 +153,7 @@ void TextBuffer::Expand(size_t required_gap_size) {
   if (gap_begin_ > 0)
     memcpy(&new_buffer[0], data(), gap_begin_);
   if (gap_end_ < buffer_.size()) {
-    size_t tail_size = buffer_.size() - gap_end_;
+    const size_t tail_size = this->tail_size();
     memcpy(&new_buffer[new_buffer.size() - tail_size],
            &buffer_[buffer_.size() - tail_size], tail_size);
   }

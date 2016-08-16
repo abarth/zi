@@ -21,6 +21,8 @@ source_set("text") {
     "text_span_queue.h",
     "text_span.cc",
     "text_span.h",
+    "text_view.cc",
+    "text_view.h",
   ]
 
   deps = [

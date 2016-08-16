@@ -83,12 +83,12 @@ TEST(TextBuffer, Span) {
   buffer.InsertCharacter(4, 'y');
   buffer.InsertCharacter(5, 'z');
 
-  auto check = [&buffer](size_t begin, size_t end, std::string first,
-                         std::string second) {
+  auto check = [&buffer](size_t begin, size_t end, std::string left,
+                         std::string right) {
     TextSpan span(begin, end);
     auto pair = buffer.GetTextForSpan(&span);
-    EXPECT_EQ(first, pair.first.ToString());
-    EXPECT_EQ(second, pair.second.ToString());
+    EXPECT_EQ(left, pair.left().ToString());
+    EXPECT_EQ(right, pair.right().ToString());
   };
 
   check(0, 0, "", "");
@@ -106,9 +106,9 @@ TEST(TextBuffer, Span) {
   check(3, 9, "xyz", "lo,");
   check(4, 9, "yz", "lo,");
   check(5, 9, "z", "lo,");
-  check(6, 9, "", "lo,");
-  check(7, 9, "", "o,");
-  check(8, 9, "", ",");
+  check(6, 9, "lo,", "");
+  check(7, 9, "o,", "");
+  check(8, 9, ",", "");
   check(9, 9, "", "");
 }
 
