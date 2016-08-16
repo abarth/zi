@@ -50,6 +50,12 @@ class TextBuffer {
   void AddSpan(TextSpan* span);
 
   template <typename Iterator>
+  void AddSpans(Iterator begin, Iterator end) {
+    for (Iterator it = begin; it != end; ++it)
+      AddSpan(*it);
+  }
+
+  template <typename Iterator>
   void RemoveSpans(Iterator begin, Iterator end) {
     before_gap_.Erase(begin, end);
     EraseAllValues(across_gap_, begin, end);

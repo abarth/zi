@@ -205,8 +205,7 @@ void TextBuffer::DidDelete(size_t count) {
     displaced.push_back(span);
     span->PopBack(span->end() - gap_begin_);
   }
-  for (auto& span : displaced)
-    AddSpan(span);
+  AddSpans(displaced.begin(), displaced.end());
   for (auto& span : across_gap_)
     span->PopBack(count);
   after_gap_.ShiftBackward(count);
@@ -222,9 +221,7 @@ void TextBuffer::DidMoveInsertionPointForward() {
     after_gap_.pop();
     displaced.push_back(span);
   }
-  across_gap_.reserve(displaced.size());
-  for (auto& span : displaced)
-    AddSpan(span);
+  AddSpans(displaced.begin(), displaced.end());
 }
 
 void TextBuffer::DidMoveInsertionPointBackward() {
@@ -237,9 +234,7 @@ void TextBuffer::DidMoveInsertionPointBackward() {
     before_gap_.pop();
     displaced.push_back(span);
   }
-  across_gap_.reserve(displaced.size());
-  for (auto& span : displaced)
-    AddSpan(span);
+  AddSpans(displaced.begin(), displaced.end());
 }
 
 }  // namespace zi
