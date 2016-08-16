@@ -18,11 +18,11 @@
 #include <vector>
 
 #include "command_buffer.h"
-#include "line_tracker.h"
-#include "macros.h"
-#include "text_buffer.h"
-#include "text_span.h"
 #include "cursor_mode.h"
+#include "line_tracker.h"
+#include "text/text_buffer.h"
+#include "text/text_span.h"
+#include "zen/macros.h"
 
 namespace zi {
 

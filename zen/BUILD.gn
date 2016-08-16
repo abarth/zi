@@ -12,45 +12,9 @@
 # OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-source_set("lib") {
+source_set("zen") {
   sources = [
-    "command_buffer.cc",
-    "command_buffer.h",
-    "editor.cc",
-    "editor.h",
-    "line_tracker.cc",
-    "line_tracker.h",
-    "scoped_fd.cc",
-    "scoped_fd.h",
-    "term.cc",
-    "term.h",
-  ]
-
-  deps = [
-    "text",
-    "zen",
-  ]
-}
-
-executable("zi") {
-  sources = [
-    "zi.cc",
-  ]
-
-  deps = [
-    ":lib",
-  ]
-}
-
-executable("zi_unittests") {
-  sources = [
-    "//third_party/gtest/src/gtest_main.cc",
-    "text/text_buffer_unittest.cc",
-  ]
-
-  deps = [
-    ":lib",
-    "text",
-    "//third_party/gtest",
+    "macros.h",
+    "vector_extensions.h",
   ]
 }

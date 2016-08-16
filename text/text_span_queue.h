@@ -17,8 +17,8 @@
 #include <queue>
 #include <vector>
 
-#include "text_span.h"
-#include "vector_extensions.h"
+#include "text/text_span.h"
+#include "zen/vector_extensions.h"
 
 namespace zi {
 

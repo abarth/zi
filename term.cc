@@ -16,7 +16,7 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 
-#include "macros.h"
+#include "zen/macros.h"
 #include "term.h"
 
 namespace term {

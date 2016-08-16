@@ -24,11 +24,11 @@
 #include <vector>
 
 #include "command_buffer.h"
-#include "macros.h"
+#include "editor.h"
 #include "scoped_fd.h"
 #include "term.h"
-#include "text_buffer.h"
-#include "editor.h"
+#include "text/text_buffer.h"
+#include "zen/macros.h"
 
 namespace zi {
 

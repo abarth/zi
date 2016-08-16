@@ -18,6 +18,8 @@
 
 #include <string>
 
+#define ESC "\x1B"
+
 namespace term {
 
 constexpr char kBell[] = "\x07";

@@ -18,11 +18,11 @@
 #include <utility>
 #include <vector>
 
-#include "macros.h"
-#include "string_view.h"
-#include "text_span_queue.h"
-#include "text_span.h"
-#include "vector_extensions.h"
+#include "text/string_view.h"
+#include "text/text_span_queue.h"
+#include "text/text_span.h"
+#include "zen/macros.h"
+#include "zen/vector_extensions.h"
 
 namespace zi {
 

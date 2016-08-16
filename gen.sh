@@ -2,4 +2,4 @@
 
 set -e
 
-gn gen out/Debug
+gn gen --check out/Debug

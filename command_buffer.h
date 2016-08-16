@@ -17,9 +17,9 @@
 #include <sstream>
 #include <utility>
 
-#include "macros.h"
-#include "string_view.h"
 #include "term.h"
+#include "text/string_view.h"
+#include "zen/macros.h"
 
 namespace zi {
 

@@ -17,9 +17,9 @@
 #include <memory>
 #include <vector>
 
-#include "macros.h"
-#include "text_span.h"
-#include "text_buffer.h"
+#include "text/text_buffer.h"
+#include "text/text_span.h"
+#include "zen/macros.h"
 
 namespace zi {
 

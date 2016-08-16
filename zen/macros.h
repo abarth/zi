@@ -26,5 +26,3 @@
     } while (eintr_wrapper_result == -1 && errno == EINTR); \
     eintr_wrapper_result;                                   \
   })
-
-#define ESC "\x1B"
