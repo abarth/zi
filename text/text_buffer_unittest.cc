@@ -222,8 +222,8 @@ TEST(TextBuffer, AddSpan) {
   EXPECT_TRUE(world.is_dirty());
   world.MarkClean();
   EXPECT_EQ("Hello", buffer.GetTextForSpan(&hello).ToString());
-  EXPECT_EQ(0u, world.begin());
-  EXPECT_EQ(0u, world.end());
+  EXPECT_EQ(7u, world.begin());
+  EXPECT_EQ(7u, world.end());
   EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
 
   buffer.DeleteCharacter(7);
@@ -244,54 +244,52 @@ TEST(TextBuffer, AddSpan) {
   EXPECT_EQ("Hello", buffer.GetTextForSpan(&hello).ToString());
   EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
 
-  // TODO(abarth): We go off the rails at this point.
+  buffer.DeleteCharacter(4);
+  EXPECT_TRUE(hello.is_dirty());
+  hello.MarkClean();
+  EXPECT_FALSE(world.is_dirty());
+  EXPECT_EQ("Hell", buffer.GetTextForSpan(&hello).ToString());
+  EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
 
-  // buffer.DeleteCharacter(4);
-  // EXPECT_TRUE(hello.is_dirty());
-  // hello.MarkClean();
-  // EXPECT_FALSE(world.is_dirty());
-  // EXPECT_EQ("Hell", buffer.GetTextForSpan(&hello).ToString());
-  // EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
+  buffer.DeleteCharacter(0);
+  EXPECT_TRUE(hello.is_dirty());
+  hello.MarkClean();
+  EXPECT_FALSE(world.is_dirty());
+  EXPECT_EQ("ell", buffer.GetTextForSpan(&hello).ToString());
+  EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
 
-  // buffer.DeleteCharacter(0);
-  // EXPECT_TRUE(hello.is_dirty());
-  // hello.MarkClean();
-  // EXPECT_FALSE(world.is_dirty());
-  // EXPECT_EQ("ell", buffer.GetTextForSpan(&hello).ToString());
-  // EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
-  //
-  // buffer.DeleteCharacter(0);
-  // EXPECT_TRUE(hello.is_dirty());
-  // hello.MarkClean();
-  // EXPECT_FALSE(world.is_dirty());
-  // EXPECT_EQ("ll", buffer.GetTextForSpan(&hello).ToString());
-  // EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
-  //
-  // buffer.DeleteCharacter(1);
-  // EXPECT_TRUE(hello.is_dirty());
-  // hello.MarkClean();
-  // EXPECT_FALSE(world.is_dirty());
-  // EXPECT_EQ("l", buffer.GetTextForSpan(&hello).ToString());
-  // EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
-  //
-  // buffer.DeleteCharacter(0);
-  // EXPECT_TRUE(hello.is_dirty());
-  // hello.MarkClean();
-  // EXPECT_FALSE(world.is_dirty());
-  // EXPECT_EQ(0u, hello.begin());
-  // EXPECT_EQ(0u, hello.end());
-  // EXPECT_EQ("", buffer.GetTextForSpan(&hello).ToString());
-  // EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
-  //
-  // buffer.DeleteCharacter(0);
-  // EXPECT_FALSE(hello.is_dirty());
-  // EXPECT_FALSE(world.is_dirty());
-  // EXPECT_EQ(0u, hello.begin());
-  // EXPECT_EQ(0u, hello.end());
-  // EXPECT_EQ("", buffer.GetTextForSpan(&hello).ToString());
-  // EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
+  buffer.DeleteCharacter(0);
+  EXPECT_TRUE(hello.is_dirty());
+  hello.MarkClean();
+  EXPECT_FALSE(world.is_dirty());
+  EXPECT_EQ("ll", buffer.GetTextForSpan(&hello).ToString());
+  EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
 
-  // EXPECT_EQ("", buffer.ToString());
+  buffer.DeleteCharacter(1);
+  EXPECT_TRUE(hello.is_dirty());
+  hello.MarkClean();
+  EXPECT_FALSE(world.is_dirty());
+  EXPECT_EQ("l", buffer.GetTextForSpan(&hello).ToString());
+  EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
+
+  buffer.DeleteCharacter(0);
+  EXPECT_TRUE(hello.is_dirty());
+  hello.MarkClean();
+  EXPECT_FALSE(world.is_dirty());
+  EXPECT_EQ(0u, hello.begin());
+  EXPECT_EQ(0u, hello.end());
+  EXPECT_EQ("", buffer.GetTextForSpan(&hello).ToString());
+  EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
+
+  buffer.DeleteCharacter(0);
+  EXPECT_FALSE(hello.is_dirty());
+  EXPECT_FALSE(world.is_dirty());
+  EXPECT_EQ(0u, hello.begin());
+  EXPECT_EQ(0u, hello.end());
+  EXPECT_EQ("", buffer.GetTextForSpan(&hello).ToString());
+  EXPECT_EQ("", buffer.GetTextForSpan(&world).ToString());
+
+  EXPECT_EQ("", buffer.ToString());
 }
 
 }  // namespace

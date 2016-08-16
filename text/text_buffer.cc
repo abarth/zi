@@ -196,12 +196,17 @@ void TextBuffer::DidInsert(size_t count) {
 }
 
 void TextBuffer::DidDelete(size_t count) {
+  std::vector<TextSpan*> displaced;
   while (!before_gap_.empty()) {
     TextSpan* span = before_gap_.top();
     if (span->end() <= gap_begin_)
       break;
-    span->PopBack(gap_begin_ - span->end());
+    before_gap_.pop();
+    displaced.push_back(span);
+    span->PopBack(span->end() - gap_begin_);
   }
+  for (auto& span : displaced)
+    AddSpan(span);
   for (auto& span : across_gap_)
     span->PopBack(count);
   after_gap_.ShiftBackward(count);

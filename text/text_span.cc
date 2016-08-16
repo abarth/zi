@@ -33,25 +33,39 @@ void TextSpan::MarkClean() {
 }
 
 void TextSpan::PushFront(size_t count) {
-  begin_ -= std::min(count, begin_);
+  const size_t delta = std::min(count, begin_);
+  if (!delta)
+    return;
+  begin_ -= delta;
   MarkDirty();
 }
 
 void TextSpan::PushBack(size_t count) {
+  if (!count)
+    return;
   end_ += count;
   MarkDirty();
 }
 
 void TextSpan::PopFront(size_t count) {
+  if (!count)
+    return;
+  const bool was_empty = is_empty();
   begin_ += count;
   end_ = std::max(begin_, end_);
-  MarkDirty();
+  if (!was_empty)
+    MarkDirty();
 }
 
 void TextSpan::PopBack(size_t count) {
-  end_ -= std::min(count, end_);
+  const size_t delta = std::min(count, end_);
+  if (!delta)
+    return;
+  const bool was_empty = is_empty();
+  end_ -= delta;
   begin_ = std::min(begin_, end_);
-  MarkDirty();
+  if (!was_empty)
+    MarkDirty();
 }
 
 void TextSpan::ShiftForward(size_t count) {
