@@ -29,9 +29,9 @@ class StringView {
   const char* end() const { return end_; }
 
   const char* data() const { return begin_; }
-  size_t length() const { return end_ - begin_; }
 
   bool is_empty() const { return begin_ == end_; }
+  size_t length() const { return end_ - begin_; }
 
   std::string ToString() const;
 

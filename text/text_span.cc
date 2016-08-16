@@ -28,6 +28,10 @@ void TextSpan::MarkDirty() {
   is_dirty_ = true;
 }
 
+void TextSpan::MarkClean() {
+  is_dirty_ = false;
+}
+
 void TextSpan::PushFront(size_t count) {
   begin_ -= std::min(count, begin_);
   MarkDirty();

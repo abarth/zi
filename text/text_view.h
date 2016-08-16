@@ -22,7 +22,7 @@ class TextView {
  public:
   TextView();
   TextView(const std::string& string);
-  TextView(const StringView& string_view);
+  TextView(const StringView& view);
   TextView(const StringView& left, const StringView& right);
   ~TextView();
 
@@ -36,8 +36,8 @@ class TextView {
   std::string ToString() const;
 
  private:
-  const StringView left_;
-  const StringView right_;
+  StringView left_;
+  StringView right_;
 };
 
 }  // namespace zi
