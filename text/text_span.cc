@@ -74,7 +74,7 @@ void TextSpan::ShiftForward(size_t count) {
 }
 
 void TextSpan::ShiftBackward(size_t count) {
-  size_t delta = std::min(count, begin_);
+  const size_t delta = std::min(count, begin_);
   begin_ -= delta;
   end_ -= delta;
 }

@@ -53,12 +53,20 @@ void TextBuffer::InsertText(size_t position, std::string text) {
   InsertText(position, StringView(text));
 }
 
-void TextBuffer::DeleteCharacter(size_t position) {
-  if (position >= size())
+void TextBuffer::DeleteCharacterAfter(size_t position) {
+  DeleteSpan(TextSpan(position, position + 1));
+}
+
+void TextBuffer::DeleteSpan(const TextSpan& span) {
+  const size_t size = this->size();
+  const size_t begin = std::min(span.begin(), size);
+  const size_t end = std::min(span.end(), size);
+  if (begin == end)
     return;
-  MoveInsertionPointTo(position + 1);
-  --gap_begin_;
-  DidDelete(1);
+  const size_t count = end - begin;
+  MoveInsertionPointTo(end);
+  gap_begin_ -= count;
+  DidDelete(count);
   DidMoveInsertionPointBackward();
 }
 

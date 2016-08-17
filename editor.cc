@@ -88,7 +88,7 @@ bool Editor::Backspace() {
       --cursor_row_;
       SetCursorColumn(GetMaxCursorColumn());
     }
-    text_->DeleteCharacter(position - 1);
+    text_->DeleteSpan(TextSpan(position - 1, position));
     return true;
   }
   return false;

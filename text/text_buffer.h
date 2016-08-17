@@ -35,7 +35,8 @@ class TextBuffer {
   void InsertCharacter(size_t position, char c);
   void InsertText(size_t position, StringView text);
   void InsertText(size_t position, std::string text);
-  void DeleteCharacter(size_t position);
+  void DeleteCharacterAfter(size_t position);
+  void DeleteSpan(const TextSpan& span);
 
   // Returns std::string::npos if |c| is not found.
   size_t Find(char c, size_t pos = 0u);
