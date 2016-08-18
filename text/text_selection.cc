@@ -12,27 +12,24 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#pragma once
+#include "text/text_selection.h"
 
-#include <stddef.h>
-
-#include "text/text_affinity.h"
+#include "text/text_range.h"
 
 namespace zi {
 
-class TextPosition {
- public:
-  TextPosition();
-  explicit TextPosition(size_t offset,
-                        TextAffinity affinity = TextAffinity::Downstream);
-  ~TextPosition();
+TextSelection::TextSelection() = default;
 
-  size_t offset() const { return offset_; }
-  TextAffinity affinity() const { return affinity_; }
+TextSelection::TextSelection(size_t base_offset,
+                             size_t extent_offset,
+                             TextAffinity affinity)
+    : base_offset_(base_offset),
+      extent_offset_(extent_offset),
+      affinity_(affinity) {}
 
- private:
-  size_t offset_ = 0;
-  TextAffinity affinity_ = TextAffinity::Downstream;
-};
+TextSelection::TextSelection(const TextRange& range, TextAffinity affinity)
+    : TextSelection(range.begin(), range.end(), affinity) {}
+
+TextSelection::~TextSelection() = default;
 
 }  // namespace zi

@@ -19,11 +19,13 @@
 #include "zen/macros.h"
 
 namespace zi {
+class TextSelection;
 
 class TextRange {
  public:
   TextRange();
   TextRange(size_t begin, size_t end);
+  explicit TextRange(const TextSelection& selection);
   ~TextRange();
 
   void MarkDirty();

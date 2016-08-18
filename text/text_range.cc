@@ -16,11 +16,16 @@
 
 #include <algorithm>
 
+#include "text/text_selection.h"
+
 namespace zi {
 
 TextRange::TextRange() = default;
 
 TextRange::TextRange(size_t begin, size_t end) : begin_(begin), end_(end) {}
+
+TextRange::TextRange(const TextSelection& selection)
+    : TextRange(selection.start_offset(), selection.end_offset()) {}
 
 TextRange::~TextRange() = default;
 
