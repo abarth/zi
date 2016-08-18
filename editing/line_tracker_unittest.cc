@@ -12,39 +12,16 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#pragma once
+#include "editing/line_tracker.h"
 
-#include <queue>
-#include <vector>
+#include <string>
 
-#include "text/text_span.h"
-#include "zen/vector_extensions.h"
+#include "gtest/gtest.h"
 
 namespace zi {
+namespace {
 
-template <class Compare>
-class TextSpanQueue
-    : public std::priority_queue<TextSpan*, std::vector<TextSpan*>, Compare> {
- public:
-  void ShiftForward(size_t count) {
-    for (auto& value : this->c)
-      value->ShiftForward(count);
-  }
+TEST(LineTracker, Control) {}
 
-  void ShiftBackward(size_t count) {
-    for (auto& value : this->c)
-      value->ShiftBackward(count);
-  }
-
-  template <typename Iterator>
-  void Erase(Iterator begin, Iterator end) {
-    if (EraseAllValues(&this->c, begin, end))
-      std::make_heap(this->c.begin(), this->c.end(), this->comp);
-  }
-
-#ifndef NDEBUG
-  const std::vector<TextSpan*>& debug_container() const { return this->c; }
-#endif
-};
-
+}  // namespace
 }  // namespace zi

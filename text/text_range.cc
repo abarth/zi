@@ -12,27 +12,27 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "text/text_span.h"
+#include "text/text_range.h"
 
 #include <algorithm>
 
 namespace zi {
 
-TextSpan::TextSpan() {}
+TextRange::TextRange() {}
 
-TextSpan::TextSpan(size_t begin, size_t end) : begin_(begin), end_(end) {}
+TextRange::TextRange(size_t begin, size_t end) : begin_(begin), end_(end) {}
 
-TextSpan::~TextSpan() {}
+TextRange::~TextRange() {}
 
-void TextSpan::MarkDirty() {
+void TextRange::MarkDirty() {
   is_dirty_ = true;
 }
 
-void TextSpan::MarkClean() {
+void TextRange::MarkClean() {
   is_dirty_ = false;
 }
 
-void TextSpan::PushFront(size_t count) {
+void TextRange::PushFront(size_t count) {
   const size_t delta = std::min(count, begin_);
   if (!delta)
     return;
@@ -40,14 +40,14 @@ void TextSpan::PushFront(size_t count) {
   MarkDirty();
 }
 
-void TextSpan::PushBack(size_t count) {
+void TextRange::PushBack(size_t count) {
   if (!count)
     return;
   end_ += count;
   MarkDirty();
 }
 
-void TextSpan::PopFront(size_t count) {
+void TextRange::PopFront(size_t count) {
   if (!count)
     return;
   const bool was_empty = is_empty();
@@ -57,7 +57,7 @@ void TextSpan::PopFront(size_t count) {
     MarkDirty();
 }
 
-void TextSpan::PopBack(size_t count) {
+void TextRange::PopBack(size_t count) {
   const size_t delta = std::min(count, end_);
   if (!delta)
     return;
@@ -68,24 +68,24 @@ void TextSpan::PopBack(size_t count) {
     MarkDirty();
 }
 
-void TextSpan::ShiftForward(size_t count) {
+void TextRange::ShiftForward(size_t count) {
   begin_ += count;
   end_ += count;
 }
 
-void TextSpan::ShiftBackward(size_t count) {
+void TextRange::ShiftBackward(size_t count) {
   const size_t delta = std::min(count, begin_);
   begin_ -= delta;
   end_ -= delta;
 }
 
-bool TextSpan::DescendingByBegin::operator()(const TextSpan* lhs,
-                                             const TextSpan* rhs) const {
+bool TextRange::DescendingByBegin::operator()(const TextRange* lhs,
+                                             const TextRange* rhs) const {
   return lhs->begin() > rhs->begin();
 }
 
-bool TextSpan::AscendingByEnd::operator()(const TextSpan* lhs,
-                                          const TextSpan* rhs) const {
+bool TextRange::AscendingByEnd::operator()(const TextRange* lhs,
+                                          const TextRange* rhs) const {
   return lhs->end() < rhs->end();
 }
 

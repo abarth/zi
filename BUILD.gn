@@ -29,14 +29,16 @@ executable("zi") {
 executable("zi_unittests") {
   sources = [
     "//third_party/gtest/src/gtest_main.cc",
+    "editing/line_tracker_unittest.cc",
     "text/string_view_unittest.cc",
     "text/text_buffer_unittest.cc",
-    "text/text_span_queue_unittest.cc",
-    "text/text_span_unittest.cc",
+    "text/text_range_queue_unittest.cc",
+    "text/text_range_unittest.cc",
     "text/text_view_unittest.cc",
   ]
 
   deps = [
+    "//editing",
     "//text",
     "//third_party/gtest",
   ]

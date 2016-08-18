@@ -21,7 +21,7 @@
 #include "editing/line_tracker.h"
 #include "terminal/command_buffer.h"
 #include "text/text_buffer.h"
-#include "text/text_span.h"
+#include "text/text_range.h"
 #include "zen/macros.h"
 
 namespace zi {
@@ -56,7 +56,7 @@ class Editor {
   bool MoveCursorRight();
 
  private:
-  TextSpan* GetCurrentLine() const;
+  TextRange* GetCurrentLine() const;
   size_t GetMaxCursorColumn() const;
   void EnsureCursorVisible();
   size_t GetCurrentTextPosition();

@@ -20,11 +20,11 @@
 
 namespace zi {
 
-class TextSpan {
+class TextRange {
  public:
-  TextSpan();
-  TextSpan(size_t begin, size_t end);
-  ~TextSpan();
+  TextRange();
+  TextRange(size_t begin, size_t end);
+  ~TextRange();
 
   void MarkDirty();
   void MarkClean();
@@ -47,11 +47,11 @@ class TextSpan {
   size_t length() const { return end_ - begin_; }
 
   struct DescendingByBegin {
-    bool operator()(const TextSpan* lhs, const TextSpan* rhs) const;
+    bool operator()(const TextRange* lhs, const TextRange* rhs) const;
   };
 
   struct AscendingByEnd {
-    bool operator()(const TextSpan* lhs, const TextSpan* rhs) const;
+    bool operator()(const TextRange* lhs, const TextRange* rhs) const;
   };
 
  private:
@@ -59,7 +59,7 @@ class TextSpan {
   size_t begin_ = 0;
   size_t end_ = 0;
 
-  DISALLOW_COPY_AND_ASSIGN(TextSpan);
+  DISALLOW_COPY_AND_ASSIGN(TextRange);
 };
 
 }  // namespace zi

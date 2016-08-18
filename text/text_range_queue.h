@@ -14,30 +14,37 @@
 
 #pragma once
 
-#include <memory>
+#include <queue>
 #include <vector>
 
-#include "text/text_buffer.h"
 #include "text/text_range.h"
-#include "zen/macros.h"
+#include "zen/vector_extensions.h"
 
 namespace zi {
 
-class LineTracker {
+template <class Compare>
+class TextRangeQueue
+    : public std::priority_queue<TextRange*, std::vector<TextRange*>, Compare> {
  public:
-  LineTracker();
-  ~LineTracker();
+  void ShiftForward(size_t count) {
+    for (auto& value : this->c)
+      value->ShiftForward(count);
+  }
 
-  void Clear();
-  void UpdateLines(TextBuffer* text);
-  TextRange* GetLine(size_t line_index) const;
+  void ShiftBackward(size_t count) {
+    for (auto& value : this->c)
+      value->ShiftBackward(count);
+  }
 
-  size_t size() const { return lines_.size(); }
+  template <typename Iterator>
+  void Erase(Iterator begin, Iterator end) {
+    if (EraseAllValues(&this->c, begin, end))
+      std::make_heap(this->c.begin(), this->c.end(), this->comp);
+  }
 
- private:
-  std::vector<std::unique_ptr<TextRange>> lines_;
-
-  DISALLOW_COPY_AND_ASSIGN(LineTracker);
+#ifndef NDEBUG
+  const std::vector<TextRange*>& debug_container() const { return this->c; }
+#endif
 };
 
 }  // namespace zi

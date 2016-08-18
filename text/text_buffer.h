@@ -18,8 +18,8 @@
 #include <vector>
 
 #include "text/string_view.h"
-#include "text/text_span_queue.h"
-#include "text/text_span.h"
+#include "text/text_range_queue.h"
+#include "text/text_range.h"
 #include "text/text_view.h"
 #include "zen/macros.h"
 #include "zen/vector_extensions.h"
@@ -36,7 +36,7 @@ class TextBuffer {
   void InsertText(size_t position, StringView text);
   void InsertText(size_t position, std::string text);
   void DeleteCharacterAfter(size_t position);
-  void DeleteSpan(const TextSpan& span);
+  void DeleteRange(const TextRange& range);
 
   // Returns std::string::npos if |c| is not found.
   size_t Find(char c, size_t pos = 0u);
@@ -46,25 +46,25 @@ class TextBuffer {
 
   std::string ToString() const;
   TextView GetText() const;
-  TextView GetTextForSpan(TextSpan* span) const;
+  TextView GetTextForRange(TextRange* range) const;
 
-  void AddSpan(TextSpan* span);
+  void AddRange(TextRange* range);
 
   template <typename Iterator>
-  void AddSpans(Iterator begin, Iterator end) {
+  void AddRanges(Iterator begin, Iterator end) {
     for (Iterator it = begin; it != end; ++it)
-      AddSpan(*it);
+      AddRange(*it);
   }
 
   template <typename Iterator>
-  void RemoveSpans(Iterator begin, Iterator end) {
+  void RemoveRanges(Iterator begin, Iterator end) {
     before_gap_.Erase(begin, end);
     EraseAllValues(across_gap_, begin, end);
     after_gap_.Erase(begin, end);
   }
 
 #ifndef NDEBUG
-  void DebugDumpSpans();
+  void DebugDumpRanges();
 #endif
 
  private:
@@ -86,9 +86,9 @@ class TextBuffer {
   size_t gap_end_ = 0;
   std::vector<char> buffer_;
 
-  TextSpanQueue<TextSpan::AscendingByEnd> before_gap_;
-  std::vector<TextSpan*> across_gap_;
-  TextSpanQueue<TextSpan::DescendingByBegin> after_gap_;
+  TextRangeQueue<TextRange::AscendingByEnd> before_gap_;
+  std::vector<TextRange*> across_gap_;
+  TextRangeQueue<TextRange::DescendingByBegin> after_gap_;
 
   DISALLOW_COPY_AND_ASSIGN(TextBuffer);
 };

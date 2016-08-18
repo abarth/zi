@@ -54,13 +54,13 @@ void TextBuffer::InsertText(size_t position, std::string text) {
 }
 
 void TextBuffer::DeleteCharacterAfter(size_t position) {
-  DeleteSpan(TextSpan(position, position + 1));
+  DeleteRange(TextRange(position, position + 1));
 }
 
-void TextBuffer::DeleteSpan(const TextSpan& span) {
+void TextBuffer::DeleteRange(const TextRange& range) {
   const size_t size = this->size();
-  const size_t begin = std::min(span.begin(), size);
-  const size_t end = std::min(span.end(), size);
+  const size_t begin = std::min(range.begin(), size);
+  const size_t end = std::min(range.end(), size);
   if (begin == end)
     return;
   const size_t count = end - begin;
@@ -128,54 +128,54 @@ TextView TextBuffer::GetText() const {
                   StringView(data + gap_end_, data + buffer_.size()));
 }
 
-TextView TextBuffer::GetTextForSpan(TextSpan* span) const {
-  if (span->end() <= gap_begin_) {
-    const char* begin = &buffer_[span->begin()];
-    return TextView(StringView(begin, begin + span->length()));
-  } else if (span->begin() >= gap_begin_) {
-    const char* begin = &buffer_[span->begin() + gap_size()];
-    // TODO(abarth): Should we handle the case where the span extends beyond the
+TextView TextBuffer::GetTextForRange(TextRange* range) const {
+  if (range->end() <= gap_begin_) {
+    const char* begin = &buffer_[range->begin()];
+    return TextView(StringView(begin, begin + range->length()));
+  } else if (range->begin() >= gap_begin_) {
+    const char* begin = &buffer_[range->begin() + gap_size()];
+    // TODO(abarth): Should we handle the case where the range extends beyond the
     // buffer?
-    return TextView(StringView(begin, begin + span->length()));
+    return TextView(StringView(begin, begin + range->length()));
   } else {
-    // The span crosses the gap.
-    const char* first_begin = &buffer_[span->begin()];
+    // The range crosses the gap.
+    const char* first_begin = &buffer_[range->begin()];
     const char* first_end = &buffer_[gap_begin_];
     const size_t first_length = first_end - first_begin;
     const char* second_begin = &buffer_[gap_end_];
-    const char* second_end = second_begin + (span->length() - first_length);
+    const char* second_end = second_begin + (range->length() - first_length);
     return TextView(StringView(first_begin, first_end),
                     StringView(second_begin, second_end));
   }
 }
 
-void TextBuffer::AddSpan(TextSpan* span) {
-  if (span->end() <= gap_begin_)
-    before_gap_.push(span);
-  else if (span->begin() >= gap_begin_)
-    after_gap_.push(span);
+void TextBuffer::AddRange(TextRange* range) {
+  if (range->end() <= gap_begin_)
+    before_gap_.push(range);
+  else if (range->begin() >= gap_begin_)
+    after_gap_.push(range);
   else
-    across_gap_.push_back(span);
+    across_gap_.push_back(range);
 }
 
 #ifndef NDEBUG
 
-static void DebugDumpTextSpanVector(const std::vector<TextSpan*>& spans) {
-  for (auto& span : spans) {
-    std::cout << "begin=" << span->begin() << " end=" << span->end()
+static void DebugDumpTextRangeVector(const std::vector<TextRange*>& ranges) {
+  for (auto& range : ranges) {
+    std::cout << "begin=" << range->begin() << " end=" << range->end()
               << std::endl;
   }
 }
 
-void TextBuffer::DebugDumpSpans() {
+void TextBuffer::DebugDumpRanges() {
   std::cout << "gap_begin=" << gap_begin_ << " gap_end=" << gap_end_
             << " size=" << buffer_.size() << std::endl;
   std::cout << "== Before gap ==" << std::endl;
-  DebugDumpTextSpanVector(before_gap_.debug_container());
+  DebugDumpTextRangeVector(before_gap_.debug_container());
   std::cout << "== Across gap ==" << std::endl;
-  DebugDumpTextSpanVector(across_gap_);
+  DebugDumpTextRangeVector(across_gap_);
   std::cout << "== After gap ==" << std::endl;
-  DebugDumpTextSpanVector(after_gap_.debug_container());
+  DebugDumpTextRangeVector(after_gap_.debug_container());
 }
 
 #endif
@@ -198,51 +198,51 @@ void TextBuffer::Expand(size_t required_gap_size) {
 }
 
 void TextBuffer::DidInsert(size_t count) {
-  for (auto& span : across_gap_)
-    span->PushBack(count);
+  for (auto& range : across_gap_)
+    range->PushBack(count);
   after_gap_.ShiftForward(count);
 }
 
 void TextBuffer::DidDelete(size_t count) {
-  std::vector<TextSpan*> displaced;
+  std::vector<TextRange*> displaced;
   while (!before_gap_.empty()) {
-    TextSpan* span = before_gap_.top();
-    if (span->end() <= gap_begin_)
+    TextRange* range = before_gap_.top();
+    if (range->end() <= gap_begin_)
       break;
     before_gap_.pop();
-    displaced.push_back(span);
-    span->PopBack(span->end() - gap_begin_);
+    displaced.push_back(range);
+    range->PopBack(range->end() - gap_begin_);
   }
-  AddSpans(displaced.begin(), displaced.end());
-  for (auto& span : across_gap_)
-    span->PopBack(count);
+  AddRanges(displaced.begin(), displaced.end());
+  for (auto& range : across_gap_)
+    range->PopBack(count);
   after_gap_.ShiftBackward(count);
 }
 
 void TextBuffer::DidMoveInsertionPointForward() {
-  std::vector<TextSpan*> displaced;
+  std::vector<TextRange*> displaced;
   across_gap_.swap(displaced);
   while (!after_gap_.empty()) {
-    TextSpan* span = after_gap_.top();
-    if (span->begin() >= gap_begin_)
+    TextRange* range = after_gap_.top();
+    if (range->begin() >= gap_begin_)
       break;
     after_gap_.pop();
-    displaced.push_back(span);
+    displaced.push_back(range);
   }
-  AddSpans(displaced.begin(), displaced.end());
+  AddRanges(displaced.begin(), displaced.end());
 }
 
 void TextBuffer::DidMoveInsertionPointBackward() {
-  std::vector<TextSpan*> displaced;
+  std::vector<TextRange*> displaced;
   across_gap_.swap(displaced);
   while (!before_gap_.empty()) {
-    TextSpan* span = before_gap_.top();
-    if (span->end() <= gap_begin_)
+    TextRange* range = before_gap_.top();
+    if (range->end() <= gap_begin_)
       break;
     before_gap_.pop();
-    displaced.push_back(span);
+    displaced.push_back(range);
   }
-  AddSpans(displaced.begin(), displaced.end());
+  AddRanges(displaced.begin(), displaced.end());
 }
 
 }  // namespace zi

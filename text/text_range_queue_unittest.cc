@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "text/text_span_queue.h"
+#include "text/text_range_queue.h"
 
 #include <string>
 
@@ -21,11 +21,11 @@
 namespace zi {
 namespace {
 
-TEST(TextSpanQueue, Control) {
-  TextSpanQueue<TextSpan::DescendingByBegin> queue;
-  TextSpan a(1, 10);
-  TextSpan b(2, 9);
-  TextSpan c(3, 11);
+TEST(TextRangeQueue, Control) {
+  TextRangeQueue<TextRange::DescendingByBegin> queue;
+  TextRange a(1, 10);
+  TextRange b(2, 9);
+  TextRange c(3, 11);
 
   queue.push(&a);
   queue.push(&b);
@@ -46,18 +46,18 @@ TEST(TextSpanQueue, Control) {
   EXPECT_EQ(4u, b.begin());
   EXPECT_EQ(5u, c.begin());
 
-  std::vector<TextSpan*> doomed;
+  std::vector<TextRange*> doomed;
   doomed.push_back(&a);
   doomed.push_back(&c);
   queue.Erase(doomed.begin(), doomed.end());
   EXPECT_EQ(4u, queue.top()->begin());
 }
 
-TEST(TextSpanQueue, AscendingByEnd) {
-  TextSpanQueue<TextSpan::AscendingByEnd> queue;
-  TextSpan a(1, 10);
-  TextSpan b(2, 9);
-  TextSpan c(3, 11);
+TEST(TextRangeQueue, AscendingByEnd) {
+  TextRangeQueue<TextRange::AscendingByEnd> queue;
+  TextRange a(1, 10);
+  TextRange b(2, 9);
+  TextRange c(3, 11);
 
   queue.push(&a);
   queue.push(&b);

@@ -18,9 +18,9 @@ source_set("text") {
     "string_view.h",
     "text_buffer.cc",
     "text_buffer.h",
-    "text_span_queue.h",
-    "text_span.cc",
-    "text_span.h",
+    "text_range_queue.h",
+    "text_range.cc",
+    "text_range.h",
     "text_view.cc",
     "text_view.h",
   ]

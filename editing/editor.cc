@@ -34,7 +34,7 @@ void Editor::Display(CommandBuffer* commands) {
   lines_.UpdateLines(text_.get());
   for (size_t i = 0; i < lines_.size(); ++i) {
     commands->MoveCursorTo(0, i);
-    *commands << text_->GetTextForSpan(lines_.GetLine(i + base_line_));
+    *commands << text_->GetTextForRange(lines_.GetLine(i + base_line_));
   }
   if (height_ > lines_.size()) {
     *commands << term::kSetLowIntensity;
@@ -88,7 +88,7 @@ bool Editor::Backspace() {
       --cursor_row_;
       SetCursorColumn(GetMaxCursorColumn());
     }
-    text_->DeleteSpan(TextSpan(position - 1, position));
+    text_->DeleteRange(TextRange(position - 1, position));
     return true;
   }
   return false;
@@ -144,7 +144,7 @@ void Editor::EnsureCursorVisible() {
     ScrollTo(cursor_row_ - height_ + 1);
 }
 
-TextSpan* Editor::GetCurrentLine() const {
+TextRange* Editor::GetCurrentLine() const {
   return lines_.GetLine(cursor_row_);
 }
 

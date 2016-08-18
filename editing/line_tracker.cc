@@ -31,17 +31,17 @@ void LineTracker::UpdateLines(TextBuffer* text) {
     const size_t text_size = text->size();
     while (offset < text_size) {
       size_t end = text->Find('\n', offset);
-      std::unique_ptr<TextSpan> line;
+      std::unique_ptr<TextRange> line;
       if (end == std::string::npos) {
         if (offset < text_size)
-          lines_.emplace_back(new TextSpan(offset, text_size));
+          lines_.emplace_back(new TextRange(offset, text_size));
         return;
       }
-      lines_.emplace_back(new TextSpan(offset, end));
+      lines_.emplace_back(new TextRange(offset, end));
       offset = end + 1;
     }
     // } else {
-    //   std::vector<std::unique_ptr<TextSpan>> updated_lines;
+    //   std::vector<std::unique_ptr<TextRange>> updated_lines;
     //   updated_lines.reserve(lines_.size());
     //   for (int i = 0; i < lines_.size(); ++i) {
     //     auto& line = lines_[i];
@@ -60,7 +60,7 @@ void LineTracker::UpdateLines(TextBuffer* text) {
   }
 }
 
-TextSpan* LineTracker::GetLine(size_t line_index) const {
+TextRange* LineTracker::GetLine(size_t line_index) const {
   return lines_[line_index].get();
 }
 
