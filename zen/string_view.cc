@@ -12,31 +12,22 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "text/text_view.h"
+#include "zen/string_view.h"
 
 namespace zi {
 
-TextView::TextView() = default;
+StringView::StringView() = default;
 
-TextView::TextView(const std::string& string) : left_(string) {}
+StringView::StringView(const std::string& string)
+    : begin_(string.data()), end_(string.data() + string.length()) {}
 
-TextView::TextView(const StringView& view) : left_(view) {}
+StringView::StringView(const char* begin, const char* end)
+    : begin_(begin), end_(end) {}
 
-TextView::TextView(const StringView& left, const StringView& right)
-    : left_(left), right_(right) {}
+StringView::~StringView() = default;
 
-TextView::~TextView() = default;
-
-std::string TextView::ToString() const {
-  std::string result;
-  const size_t left_length = left_.length();
-  const size_t right_length = right_.length();
-  result.resize(left_length + right_length);
-  if (left_length)
-    result.replace(0, left_length, left_.data(), left_length);
-  if (right_length)
-    result.replace(left_length, right_length, right_.data(), right_length);
-  return result;
+std::string StringView::ToString() const {
+  return std::string(begin(), end());
 }
 
 }  // namespace zi

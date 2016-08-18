@@ -14,10 +14,12 @@
 
 source_set("text") {
   sources = [
-    "string_view.cc",
-    "string_view.h",
+    "text_affinity.h",
     "text_buffer.cc",
     "text_buffer.h",
+    "text_direction.h",
+    "text_position.cc",
+    "text_position.h",
     "text_range_queue.h",
     "text_range.cc",
     "text_range.h",

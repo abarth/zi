@@ -12,34 +12,26 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "text/string_view.h"
+#pragma once
 
-#include <string>
+#include <stddef.h>
 
-#include "gtest/gtest.h"
+#include "text/text_affinity.h"
 
 namespace zi {
-namespace {
 
-TEST(StringView, Default) {
-  StringView view;
-  EXPECT_TRUE(view.is_empty());
-  EXPECT_EQ(0u, view.length());
-  EXPECT_EQ(nullptr, view.begin());
-  EXPECT_EQ(nullptr, view.end());
-  EXPECT_EQ(nullptr, view.data());
-  EXPECT_EQ("", view.ToString());
-}
+class TextPosition {
+ public:
+  TextPosition();
+  TextPosition(size_t offset, TextAffinity affinity);
+  ~TextPosition();
 
-TEST(StringView, Control) {
-  std::string text = "Hello, world";
-  StringView view(text);
-  EXPECT_EQ(text.data(), view.data());
-  EXPECT_EQ(text.length(), view.length());
-  EXPECT_FALSE(view.is_empty());
-  EXPECT_EQ(text, std::string(view.begin(), view.end()));
-  EXPECT_EQ(text, view.ToString());
-}
+  size_t offset() const { return offset_; }
+  TextAffinity affinity() const { return affinity_; }
 
-}  // namespace
+ private:
+  size_t offset_ = 0;
+  TextAffinity affinity_ = TextAffinity::Downstream;
+};
+
 }  // namespace zi

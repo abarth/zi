@@ -12,31 +12,34 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "text/text_view.h"
+#include "zen/string_view.h"
+
+#include <string>
+
+#include "gtest/gtest.h"
 
 namespace zi {
+namespace {
 
-TextView::TextView() = default;
-
-TextView::TextView(const std::string& string) : left_(string) {}
-
-TextView::TextView(const StringView& view) : left_(view) {}
-
-TextView::TextView(const StringView& left, const StringView& right)
-    : left_(left), right_(right) {}
-
-TextView::~TextView() = default;
-
-std::string TextView::ToString() const {
-  std::string result;
-  const size_t left_length = left_.length();
-  const size_t right_length = right_.length();
-  result.resize(left_length + right_length);
-  if (left_length)
-    result.replace(0, left_length, left_.data(), left_length);
-  if (right_length)
-    result.replace(left_length, right_length, right_.data(), right_length);
-  return result;
+TEST(StringView, Default) {
+  StringView view;
+  EXPECT_TRUE(view.is_empty());
+  EXPECT_EQ(0u, view.length());
+  EXPECT_EQ(nullptr, view.begin());
+  EXPECT_EQ(nullptr, view.end());
+  EXPECT_EQ(nullptr, view.data());
+  EXPECT_EQ("", view.ToString());
 }
 
+TEST(StringView, Control) {
+  std::string text = "Hello, world";
+  StringView view(text);
+  EXPECT_EQ(text.data(), view.data());
+  EXPECT_EQ(text.length(), view.length());
+  EXPECT_FALSE(view.is_empty());
+  EXPECT_EQ(text, std::string(view.begin(), view.end()));
+  EXPECT_EQ(text, view.ToString());
+}
+
+}  // namespace
 }  // namespace zi

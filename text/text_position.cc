@@ -12,31 +12,15 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "text/text_view.h"
+#include "text/text_position.h"
 
 namespace zi {
 
-TextView::TextView() = default;
+TextPosition::TextPosition() = default;
 
-TextView::TextView(const std::string& string) : left_(string) {}
+TextPosition::TextPosition(size_t offset, TextAffinity affinity)
+    : offset_(offset), affinity_(affinity) {}
 
-TextView::TextView(const StringView& view) : left_(view) {}
-
-TextView::TextView(const StringView& left, const StringView& right)
-    : left_(left), right_(right) {}
-
-TextView::~TextView() = default;
-
-std::string TextView::ToString() const {
-  std::string result;
-  const size_t left_length = left_.length();
-  const size_t right_length = right_.length();
-  result.resize(left_length + right_length);
-  if (left_length)
-    result.replace(0, left_length, left_.data(), left_length);
-  if (right_length)
-    result.replace(left_length, right_length, right_.data(), right_length);
-  return result;
-}
+TextPosition::~TextPosition() = default;
 
 }  // namespace zi

@@ -18,7 +18,7 @@
 #include <utility>
 
 #include "terminal/term.h"
-#include "text/string_view.h"
+#include "zen/string_view.h"
 #include "text/text_view.h"
 #include "zen/macros.h"
 

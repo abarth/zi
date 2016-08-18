@@ -25,11 +25,11 @@
 
 namespace zi {
 
-TextBuffer::TextBuffer() {}
+TextBuffer::TextBuffer() = default;
 
 TextBuffer::TextBuffer(std::vector<char> text) : buffer_(std::move(text)) {}
 
-TextBuffer::~TextBuffer() {}
+TextBuffer::~TextBuffer() = default;
 
 void TextBuffer::InsertCharacter(size_t position, char c) {
   if (gap_begin_ == gap_end_)
@@ -134,7 +134,8 @@ TextView TextBuffer::GetTextForRange(TextRange* range) const {
     return TextView(StringView(begin, begin + range->length()));
   } else if (range->begin() >= gap_begin_) {
     const char* begin = &buffer_[range->begin() + gap_size()];
-    // TODO(abarth): Should we handle the case where the range extends beyond the
+    // TODO(abarth): Should we handle the case where the range extends beyond
+    // the
     // buffer?
     return TextView(StringView(begin, begin + range->length()));
   } else {

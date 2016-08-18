@@ -18,11 +18,11 @@
 
 namespace zi {
 
-TextRange::TextRange() {}
+TextRange::TextRange() = default;
 
 TextRange::TextRange(size_t begin, size_t end) : begin_(begin), end_(end) {}
 
-TextRange::~TextRange() {}
+TextRange::~TextRange() = default;
 
 void TextRange::MarkDirty() {
   is_dirty_ = true;
@@ -80,12 +80,12 @@ void TextRange::ShiftBackward(size_t count) {
 }
 
 bool TextRange::DescendingByBegin::operator()(const TextRange* lhs,
-                                             const TextRange* rhs) const {
+                                              const TextRange* rhs) const {
   return lhs->begin() > rhs->begin();
 }
 
 bool TextRange::AscendingByEnd::operator()(const TextRange* lhs,
-                                          const TextRange* rhs) const {
+                                           const TextRange* rhs) const {
   return lhs->end() < rhs->end();
 }
 

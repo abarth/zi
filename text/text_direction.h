@@ -12,22 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "text/string_view.h"
+#pragma once
 
 namespace zi {
 
-StringView::StringView() {}
-
-StringView::StringView(const std::string& string)
-    : begin_(string.data()), end_(string.data() + string.length()) {}
-
-StringView::StringView(const char* begin, const char* end)
-    : begin_(begin), end_(end) {}
-
-StringView::~StringView() {}
-
-std::string StringView::ToString() const {
-  return std::string(begin(), end());
-}
+enum class TextDirection {
+  RTL,
+  LTR,
+};
 
 }  // namespace zi
