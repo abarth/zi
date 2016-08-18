@@ -31,25 +31,28 @@ TextBuffer::TextBuffer(std::vector<char> text) : buffer_(std::move(text)) {}
 
 TextBuffer::~TextBuffer() = default;
 
-void TextBuffer::InsertCharacter(size_t position, char c) {
+void TextBuffer::InsertCharacter(const TextPosition& position, char c) {
   if (gap_start_ == gap_end_)
     Expand(1);
-  MoveInsertionPointTo(position);
+  MoveInsertionPointTo(position.offset());
   buffer_[gap_start_++] = c;
+  // TODO(abarth): Consider the affinity when adjusting the TextRanges.
   DidInsert(1);
 }
 
-void TextBuffer::InsertText(size_t position, StringView text) {
+void TextBuffer::InsertText(const TextPosition& position, StringView text) {
   const size_t length = text.length();
   if (gap_start_ + length > gap_end_)
     Expand(length);
-  MoveInsertionPointTo(position);
+  MoveInsertionPointTo(position.offset());
   memcpy(&buffer_[gap_start_], text.data(), length);
   gap_start_ += length;
+  // TODO(abarth): Consider the affinity when adjusting the TextRanges.
   DidInsert(length);
 }
 
-void TextBuffer::InsertText(size_t position, std::string text) {
+void TextBuffer::InsertText(const TextPosition& position,
+                            const std::string& text) {
   InsertText(position, StringView(text));
 }
 

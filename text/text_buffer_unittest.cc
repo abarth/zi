@@ -29,9 +29,9 @@ TEST(TextBuffer, Find) {
   std::vector<char> data(text.begin(), text.end());
 
   TextBuffer buffer(std::move(data));
-  buffer.InsertCharacter(0, 'x');
-  buffer.InsertCharacter(1, 'y');
-  buffer.InsertCharacter(2, 'z');
+  buffer.InsertCharacter(TextPosition(0), 'x');
+  buffer.InsertCharacter(TextPosition(1), 'y');
+  buffer.InsertCharacter(TextPosition(2), 'z');
 
   EXPECT_EQ(0u, buffer.Find('x'));
   EXPECT_EQ(1u, buffer.Find('y'));
@@ -53,22 +53,22 @@ TEST(TextBuffer, Insert) {
   std::vector<char> data(text.begin(), text.end());
 
   TextBuffer buffer(std::move(data));
-  buffer.InsertCharacter(3, 'x');
-  buffer.InsertCharacter(4, 'y');
-  buffer.InsertCharacter(5, 'z');
+  buffer.InsertCharacter(TextPosition(3), 'x');
+  buffer.InsertCharacter(TextPosition(4), 'y');
+  buffer.InsertCharacter(TextPosition(5), 'z');
 
   EXPECT_EQ("Helxyzlo, world", buffer.ToString());
-  buffer.InsertCharacter(3, 'A');
+  buffer.InsertCharacter(TextPosition(3), 'A');
   buffer.DeleteCharacterAfter(3);
   EXPECT_EQ("Helxyzlo, world", buffer.ToString());
-  buffer.InsertCharacter(4, 'A');
+  buffer.InsertCharacter(TextPosition(4), 'A');
   buffer.DeleteCharacterAfter(4);
   EXPECT_EQ("Helxyzlo, world", buffer.ToString());
-  buffer.InsertCharacter(5, 'A');
+  buffer.InsertCharacter(TextPosition(5), 'A');
   buffer.DeleteCharacterAfter(5);
   EXPECT_EQ("Helxyzlo, world", buffer.ToString());
 
-  buffer.InsertText(4, "four score and seven years ago");
+  buffer.InsertText(TextPosition(4), "four score and seven years ago");
   EXPECT_EQ("Helxfour score and seven years agoyzlo, world", buffer.ToString());
 }
 
@@ -77,9 +77,9 @@ TEST(TextBuffer, Range) {
   std::vector<char> data(text.begin(), text.end());
 
   TextBuffer buffer(std::move(data));
-  buffer.InsertCharacter(3, 'x');
-  buffer.InsertCharacter(4, 'y');
-  buffer.InsertCharacter(5, 'z');
+  buffer.InsertCharacter(TextPosition(3), 'x');
+  buffer.InsertCharacter(TextPosition(4), 'y');
+  buffer.InsertCharacter(TextPosition(5), 'z');
 
   auto check = [&buffer](size_t begin, size_t end, std::string left,
                          std::string right) {
@@ -141,7 +141,7 @@ TEST(TextBuffer, AddRange) {
 
   buffer.AddRange(&hello);
   buffer.AddRange(&world);
-  buffer.InsertCharacter(3, 'x');
+  buffer.InsertCharacter(TextPosition(3), 'x');
   EXPECT_TRUE(hello.is_dirty());
   hello.MarkClean();
   EXPECT_FALSE(world.is_dirty());
@@ -174,20 +174,20 @@ TEST(TextBuffer, AddRange) {
   EXPECT_EQ("Hello", buffer.GetTextForRange(&hello).ToString());
   EXPECT_EQ("orld", buffer.GetTextForRange(&world).ToString());
 
-  buffer.InsertCharacter(3, 'x');
+  buffer.InsertCharacter(TextPosition(3), 'x');
   EXPECT_TRUE(hello.is_dirty());
   hello.MarkClean();
   EXPECT_FALSE(world.is_dirty());
   EXPECT_EQ("Helxlo", buffer.GetTextForRange(&hello).ToString());
   EXPECT_EQ("orld", buffer.GetTextForRange(&world).ToString());
 
-  buffer.InsertCharacter(6, ' ');
+  buffer.InsertCharacter(TextPosition(6), ' ');
   EXPECT_FALSE(hello.is_dirty());
   EXPECT_FALSE(world.is_dirty());
   EXPECT_EQ("Helxlo", buffer.GetTextForRange(&hello).ToString());
   EXPECT_EQ("orld", buffer.GetTextForRange(&world).ToString());
 
-  buffer.InsertCharacter(6, ',');
+  buffer.InsertCharacter(TextPosition(6), ',');
   EXPECT_FALSE(hello.is_dirty());
   EXPECT_FALSE(world.is_dirty());
   EXPECT_EQ("Helxlo", buffer.GetTextForRange(&hello).ToString());
@@ -200,7 +200,7 @@ TEST(TextBuffer, AddRange) {
   EXPECT_EQ("Hello", buffer.GetTextForRange(&hello).ToString());
   EXPECT_EQ("orld", buffer.GetTextForRange(&world).ToString());
 
-  buffer.InsertCharacter(7, 'w');
+  buffer.InsertCharacter(TextPosition(7), 'w');
   EXPECT_FALSE(hello.is_dirty());
   EXPECT_FALSE(world.is_dirty());
   EXPECT_EQ("Hello", buffer.GetTextForRange(&hello).ToString());

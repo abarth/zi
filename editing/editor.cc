@@ -78,7 +78,7 @@ void Editor::InsertLineBreak() {
 }
 
 bool Editor::Backspace() {
-  size_t position = GetCurrentTextPosition();
+  size_t position = GetCurrentTextPosition().offset();
   if (position > 0) {
     if (cursor_col_ > 0) {
       SetCursorColumn(cursor_col_ - 1);
@@ -155,8 +155,8 @@ size_t Editor::GetMaxCursorColumn() const {
   return length;
 }
 
-size_t Editor::GetCurrentTextPosition() {
-  return GetCurrentLine()->start() + cursor_col_;
+TextPosition Editor::GetCurrentTextPosition() {
+  return TextPosition(GetCurrentLine()->start() + cursor_col_);
 }
 
 void Editor::SetCursorColumn(size_t column) {

@@ -17,11 +17,12 @@
 #include <string>
 #include <vector>
 
-#include "zen/string_view.h"
+#include "text/text_position.h"
 #include "text/text_range_queue.h"
 #include "text/text_range.h"
 #include "text/text_view.h"
 #include "zen/macros.h"
+#include "zen/string_view.h"
 #include "zen/vector_extensions.h"
 
 namespace zi {
@@ -32,9 +33,9 @@ class TextBuffer {
   explicit TextBuffer(std::vector<char> text);
   ~TextBuffer();
 
-  void InsertCharacter(size_t position, char c);
-  void InsertText(size_t position, StringView text);
-  void InsertText(size_t position, std::string text);
+  void InsertCharacter(const TextPosition& position, char c);
+  void InsertText(const TextPosition& position, StringView text);
+  void InsertText(const TextPosition& position, const std::string& text);
   void DeleteCharacterAfter(size_t position);
   void DeleteRange(const TextRange& range);
 
