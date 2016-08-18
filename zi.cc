@@ -23,10 +23,10 @@
 #include <utility>
 #include <vector>
 
-#include "command_buffer.h"
-#include "editor.h"
-#include "scoped_fd.h"
-#include "term.h"
+#include "editing/editor.h"
+#include "files/scoped_fd.h"
+#include "terminal/command_buffer.h"
+#include "terminal/term.h"
 #include "text/text_buffer.h"
 #include "zen/macros.h"
 

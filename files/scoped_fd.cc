@@ -12,42 +12,17 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#pragma once
+#include "files/scoped_fd.h"
 
-#include <sstream>
-#include <utility>
-
-#include "term.h"
-#include "text/string_view.h"
-#include "text/text_view.h"
-#include "zen/macros.h"
+#include <unistd.h>
 
 namespace zi {
 
-class CommandBuffer {
- public:
-  CommandBuffer();
-  ~CommandBuffer();
+ScopedFD::ScopedFD(int fd) : fd_(fd) {}
 
-  CommandBuffer& operator<<(const StringView& text);
-  CommandBuffer& operator<<(const TextView& text);
-
-  template <typename T>
-  CommandBuffer& operator<<(const T& value) {
-    stream_ << value;
-    return *this;
-  }
-
-  void Write(const char* buffer, size_t length);
-  void MoveCursorTo(int x, int y);
-  void SetForegroundColor(term::Color color);
-  void SetBackgroundColor(term::Color color);
-  void Execute();
-
- private:
-  std::ostringstream stream_;
-
-  DISALLOW_COPY_AND_ASSIGN(CommandBuffer);
-};
+ScopedFD::~ScopedFD() {
+  if (is_valid())
+    close(fd_);
+}
 
 }  // namespace zi

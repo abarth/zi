@@ -17,9 +17,9 @@
 #include <memory>
 #include <vector>
 
-#include "command_buffer.h"
-#include "cursor_mode.h"
-#include "line_tracker.h"
+#include "editing/cursor_mode.h"
+#include "editing/line_tracker.h"
+#include "terminal/command_buffer.h"
 #include "text/text_buffer.h"
 #include "text/text_span.h"
 #include "zen/macros.h"

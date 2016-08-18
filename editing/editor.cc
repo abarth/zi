@@ -12,12 +12,12 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "editor.h"
+#include "editing/editor.h"
 
 #include <algorithm>
 #include <utility>
 
-#include "term.h"
+#include "terminal/term.h"
 
 namespace zi {
 

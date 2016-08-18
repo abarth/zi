@@ -12,12 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "terminal/term.h"
+
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 
 #include "zen/macros.h"
-#include "term.h"
 
 namespace term {
 namespace {
