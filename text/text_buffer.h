@@ -79,16 +79,16 @@ class TextBuffer {
   void DidDelete(size_t count);
 
   const char* data() const { return buffer_.data(); }
-  size_t gap_size() const { return gap_end_ - gap_begin_; }
+  size_t gap_size() const { return gap_end_ - gap_start_; }
   size_t tail_size() const { return buffer_.size() - gap_end_; }
 
-  size_t gap_begin_ = 0;
+  size_t gap_start_ = 0;
   size_t gap_end_ = 0;
   std::vector<char> buffer_;
 
   TextRangeQueue<TextRange::AscendingByEnd> before_gap_;
   std::vector<TextRange*> across_gap_;
-  TextRangeQueue<TextRange::DescendingByBegin> after_gap_;
+  TextRangeQueue<TextRange::DescendingByStart> after_gap_;
 
   DISALLOW_COPY_AND_ASSIGN(TextBuffer);
 };

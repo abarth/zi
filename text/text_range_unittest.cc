@@ -24,7 +24,7 @@ namespace {
 TEST(TextRange, Default) {
   TextRange range;
   EXPECT_TRUE(range.is_empty());
-  EXPECT_EQ(0u, range.begin());
+  EXPECT_EQ(0u, range.start());
   EXPECT_EQ(0u, range.end());
   EXPECT_EQ(0u, range.length());
   EXPECT_FALSE(range.is_dirty());
@@ -33,49 +33,49 @@ TEST(TextRange, Default) {
 TEST(TextRange, Control) {
   TextRange range(4, 7);
   EXPECT_FALSE(range.is_empty());
-  EXPECT_EQ(4u, range.begin());
+  EXPECT_EQ(4u, range.start());
   EXPECT_EQ(7u, range.end());
   EXPECT_EQ(3u, range.length());
   EXPECT_FALSE(range.is_dirty());
 
   range.ShiftForward(2);
-  EXPECT_EQ(6u, range.begin());
+  EXPECT_EQ(6u, range.start());
   EXPECT_EQ(9u, range.end());
   EXPECT_FALSE(range.is_dirty());
 
   range.ShiftBackward(1);
-  EXPECT_EQ(5u, range.begin());
+  EXPECT_EQ(5u, range.start());
   EXPECT_EQ(8u, range.end());
   EXPECT_FALSE(range.is_dirty());
 
   range.PushFront(3);
-  EXPECT_EQ(2u, range.begin());
+  EXPECT_EQ(2u, range.start());
   EXPECT_EQ(8u, range.end());
   EXPECT_TRUE(range.is_dirty());
   range.MarkClean();
   EXPECT_FALSE(range.is_dirty());
 
   range.PushFront(3);
-  EXPECT_EQ(0u, range.begin());
+  EXPECT_EQ(0u, range.start());
   EXPECT_EQ(8u, range.end());
   EXPECT_TRUE(range.is_dirty());
   range.MarkClean();
   EXPECT_FALSE(range.is_dirty());
 
   range.ShiftBackward(1);
-  EXPECT_EQ(0u, range.begin());
+  EXPECT_EQ(0u, range.start());
   EXPECT_EQ(8u, range.end());
   EXPECT_FALSE(range.is_dirty());
 
   range.PopFront(2);
-  EXPECT_EQ(2u, range.begin());
+  EXPECT_EQ(2u, range.start());
   EXPECT_EQ(8u, range.end());
   EXPECT_TRUE(range.is_dirty());
   range.MarkClean();
   EXPECT_FALSE(range.is_dirty());
 
   range.PopFront(7);
-  EXPECT_EQ(9u, range.begin());
+  EXPECT_EQ(9u, range.start());
   EXPECT_EQ(9u, range.end());
   EXPECT_TRUE(range.is_dirty());
   EXPECT_TRUE(range.is_empty());
@@ -83,21 +83,21 @@ TEST(TextRange, Control) {
   EXPECT_FALSE(range.is_dirty());
 
   range.PushBack(5);
-  EXPECT_EQ(9u, range.begin());
+  EXPECT_EQ(9u, range.start());
   EXPECT_EQ(14u, range.end());
   EXPECT_TRUE(range.is_dirty());
   range.MarkClean();
   EXPECT_FALSE(range.is_dirty());
 
   range.PopBack(4);
-  EXPECT_EQ(9u, range.begin());
+  EXPECT_EQ(9u, range.start());
   EXPECT_EQ(10u, range.end());
   EXPECT_TRUE(range.is_dirty());
   range.MarkClean();
   EXPECT_FALSE(range.is_dirty());
 
   range.PopBack(4);
-  EXPECT_EQ(6u, range.begin());
+  EXPECT_EQ(6u, range.start());
   EXPECT_EQ(6u, range.end());
   EXPECT_TRUE(range.is_dirty());
   range.MarkClean();

@@ -22,7 +22,7 @@ namespace zi {
 
 TextRange::TextRange() = default;
 
-TextRange::TextRange(size_t begin, size_t end) : begin_(begin), end_(end) {}
+TextRange::TextRange(size_t start, size_t end) : start_(start), end_(end) {}
 
 TextRange::TextRange(const TextSelection& selection)
     : TextRange(selection.start_offset(), selection.end_offset()) {}
@@ -38,10 +38,10 @@ void TextRange::MarkClean() {
 }
 
 void TextRange::PushFront(size_t count) {
-  const size_t delta = std::min(count, begin_);
+  const size_t delta = std::min(count, start_);
   if (!delta)
     return;
-  begin_ -= delta;
+  start_ -= delta;
   MarkDirty();
 }
 
@@ -56,8 +56,8 @@ void TextRange::PopFront(size_t count) {
   if (!count)
     return;
   const bool was_empty = is_empty();
-  begin_ += count;
-  end_ = std::max(begin_, end_);
+  start_ += count;
+  end_ = std::max(start_, end_);
   if (!was_empty)
     MarkDirty();
 }
@@ -68,25 +68,25 @@ void TextRange::PopBack(size_t count) {
     return;
   const bool was_empty = is_empty();
   end_ -= delta;
-  begin_ = std::min(begin_, end_);
+  start_ = std::min(start_, end_);
   if (!was_empty)
     MarkDirty();
 }
 
 void TextRange::ShiftForward(size_t count) {
-  begin_ += count;
+  start_ += count;
   end_ += count;
 }
 
 void TextRange::ShiftBackward(size_t count) {
-  const size_t delta = std::min(count, begin_);
-  begin_ -= delta;
+  const size_t delta = std::min(count, start_);
+  start_ -= delta;
   end_ -= delta;
 }
 
-bool TextRange::DescendingByBegin::operator()(const TextRange* lhs,
+bool TextRange::DescendingByStart::operator()(const TextRange* lhs,
                                               const TextRange* rhs) const {
-  return lhs->begin() > rhs->begin();
+  return lhs->start() > rhs->start();
 }
 
 bool TextRange::AscendingByEnd::operator()(const TextRange* lhs,

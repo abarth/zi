@@ -42,13 +42,13 @@ class TextRange {
 
   bool is_dirty() const { return is_dirty_; }
 
-  size_t begin() const { return begin_; }
+  size_t start() const { return start_; }
   size_t end() const { return end_; }
 
-  bool is_empty() const { return begin_ == end_; }
-  size_t length() const { return end_ - begin_; }
+  bool is_empty() const { return start_ == end_; }
+  size_t length() const { return end_ - start_; }
 
-  struct DescendingByBegin {
+  struct DescendingByStart {
     bool operator()(const TextRange* lhs, const TextRange* rhs) const;
   };
 
@@ -58,7 +58,7 @@ class TextRange {
 
  private:
   bool is_dirty_ = false;
-  size_t begin_ = 0;
+  size_t start_ = 0;
   size_t end_ = 0;
 
   DISALLOW_COPY_AND_ASSIGN(TextRange);

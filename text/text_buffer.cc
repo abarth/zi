@@ -32,20 +32,20 @@ TextBuffer::TextBuffer(std::vector<char> text) : buffer_(std::move(text)) {}
 TextBuffer::~TextBuffer() = default;
 
 void TextBuffer::InsertCharacter(size_t position, char c) {
-  if (gap_begin_ == gap_end_)
+  if (gap_start_ == gap_end_)
     Expand(1);
   MoveInsertionPointTo(position);
-  buffer_[gap_begin_++] = c;
+  buffer_[gap_start_++] = c;
   DidInsert(1);
 }
 
 void TextBuffer::InsertText(size_t position, StringView text) {
   const size_t length = text.length();
-  if (gap_begin_ + length > gap_end_)
+  if (gap_start_ + length > gap_end_)
     Expand(length);
   MoveInsertionPointTo(position);
-  memcpy(&buffer_[gap_begin_], text.data(), length);
-  gap_begin_ += length;
+  memcpy(&buffer_[gap_start_], text.data(), length);
+  gap_start_ += length;
   DidInsert(length);
 }
 
@@ -59,46 +59,46 @@ void TextBuffer::DeleteCharacterAfter(size_t position) {
 
 void TextBuffer::DeleteRange(const TextRange& range) {
   const size_t size = this->size();
-  const size_t begin = std::min(range.begin(), size);
+  const size_t begin = std::min(range.start(), size);
   const size_t end = std::min(range.end(), size);
   if (begin == end)
     return;
   const size_t count = end - begin;
   MoveInsertionPointTo(end);
-  gap_begin_ -= count;
+  gap_start_ -= count;
   DidDelete(count);
   DidMoveInsertionPointBackward();
 }
 
 void TextBuffer::MoveInsertionPointForward(size_t offset) {
   size_t delta = std::min(offset, buffer_.size() - gap_end_);
-  memmove(&buffer_[gap_begin_], &buffer_[gap_end_], delta);
-  gap_begin_ += delta;
+  memmove(&buffer_[gap_start_], &buffer_[gap_end_], delta);
+  gap_start_ += delta;
   gap_end_ += delta;
   DidMoveInsertionPointForward();
 }
 
 void TextBuffer::MoveInsertionPointBackward(size_t offset) {
-  size_t delta = std::min(offset, gap_begin_);
-  gap_begin_ -= delta;
+  size_t delta = std::min(offset, gap_start_);
+  gap_start_ -= delta;
   gap_end_ -= delta;
-  memmove(&buffer_[gap_end_], &buffer_[gap_begin_], delta);
+  memmove(&buffer_[gap_end_], &buffer_[gap_start_], delta);
   DidMoveInsertionPointBackward();
 }
 
 void TextBuffer::MoveInsertionPointTo(size_t position) {
-  if (position > gap_begin_)
-    MoveInsertionPointForward(position - gap_begin_);
-  else if (position < gap_begin_)
-    MoveInsertionPointBackward(gap_begin_ - position);
+  if (position > gap_start_)
+    MoveInsertionPointForward(position - gap_start_);
+  else if (position < gap_start_)
+    MoveInsertionPointBackward(gap_start_ - position);
 }
 
 size_t TextBuffer::Find(char c, size_t pos) {
-  if (pos < gap_begin_) {
-    char* ptr = static_cast<char*>(memchr(&buffer_[pos], c, gap_begin_ - pos));
+  if (pos < gap_start_) {
+    char* ptr = static_cast<char*>(memchr(&buffer_[pos], c, gap_start_ - pos));
     if (ptr)
       return ptr - data();
-    pos = gap_begin_;
+    pos = gap_start_;
   }
   pos += gap_size();
   if (pos < buffer_.size()) {
@@ -113,35 +113,35 @@ size_t TextBuffer::Find(char c, size_t pos) {
 std::string TextBuffer::ToString() const {
   std::string result;
   result.resize(size());
-  if (gap_begin_ > 0)
-    result.replace(0, gap_begin_, data(), gap_begin_);
+  if (gap_start_ > 0)
+    result.replace(0, gap_start_, data(), gap_start_);
   if (gap_end_ < buffer_.size()) {
     const size_t tail_size = this->tail_size();
-    result.replace(gap_begin_, tail_size, &buffer_[gap_end_], tail_size);
+    result.replace(gap_start_, tail_size, &buffer_[gap_end_], tail_size);
   }
   return result;
 }
 
 TextView TextBuffer::GetText() const {
   const char* data = buffer_.data();
-  return TextView(StringView(data, data + gap_begin_),
+  return TextView(StringView(data, data + gap_start_),
                   StringView(data + gap_end_, data + buffer_.size()));
 }
 
 TextView TextBuffer::GetTextForRange(TextRange* range) const {
-  if (range->end() <= gap_begin_) {
-    const char* begin = &buffer_[range->begin()];
+  if (range->end() <= gap_start_) {
+    const char* begin = &buffer_[range->start()];
     return TextView(StringView(begin, begin + range->length()));
-  } else if (range->begin() >= gap_begin_) {
-    const char* begin = &buffer_[range->begin() + gap_size()];
+  } else if (range->start() >= gap_start_) {
+    const char* begin = &buffer_[range->start() + gap_size()];
     // TODO(abarth): Should we handle the case where the range extends beyond
     // the
     // buffer?
     return TextView(StringView(begin, begin + range->length()));
   } else {
     // The range crosses the gap.
-    const char* first_begin = &buffer_[range->begin()];
-    const char* first_end = &buffer_[gap_begin_];
+    const char* first_begin = &buffer_[range->start()];
+    const char* first_end = &buffer_[gap_start_];
     const size_t first_length = first_end - first_begin;
     const char* second_begin = &buffer_[gap_end_];
     const char* second_end = second_begin + (range->length() - first_length);
@@ -151,9 +151,9 @@ TextView TextBuffer::GetTextForRange(TextRange* range) const {
 }
 
 void TextBuffer::AddRange(TextRange* range) {
-  if (range->end() <= gap_begin_)
+  if (range->end() <= gap_start_)
     before_gap_.push(range);
-  else if (range->begin() >= gap_begin_)
+  else if (range->start() >= gap_start_)
     after_gap_.push(range);
   else
     across_gap_.push_back(range);
@@ -163,13 +163,13 @@ void TextBuffer::AddRange(TextRange* range) {
 
 static void DebugDumpTextRangeVector(const std::vector<TextRange*>& ranges) {
   for (auto& range : ranges) {
-    std::cout << "begin=" << range->begin() << " end=" << range->end()
+    std::cout << "begin=" << range->start() << " end=" << range->end()
               << std::endl;
   }
 }
 
 void TextBuffer::DebugDumpRanges() {
-  std::cout << "gap_begin=" << gap_begin_ << " gap_end=" << gap_end_
+  std::cout << "gap_begin=" << gap_start_ << " gap_end=" << gap_end_
             << " size=" << buffer_.size() << std::endl;
   std::cout << "== Before gap ==" << std::endl;
   DebugDumpTextRangeVector(before_gap_.debug_container());
@@ -187,8 +187,8 @@ void TextBuffer::Expand(size_t required_gap_size) {
     return;
   size_t min_size = buffer_.size() - existing_gap + required_gap_size;
   std::vector<char> new_buffer(min_size * 1.5 + 1);
-  if (gap_begin_ > 0)
-    memcpy(&new_buffer[0], data(), gap_begin_);
+  if (gap_start_ > 0)
+    memcpy(&new_buffer[0], data(), gap_start_);
   if (gap_end_ < buffer_.size()) {
     const size_t tail_size = this->tail_size();
     memcpy(&new_buffer[new_buffer.size() - tail_size],
@@ -208,11 +208,11 @@ void TextBuffer::DidDelete(size_t count) {
   std::vector<TextRange*> displaced;
   while (!before_gap_.empty()) {
     TextRange* range = before_gap_.top();
-    if (range->end() <= gap_begin_)
+    if (range->end() <= gap_start_)
       break;
     before_gap_.pop();
     displaced.push_back(range);
-    range->PopBack(range->end() - gap_begin_);
+    range->PopBack(range->end() - gap_start_);
   }
   AddRanges(displaced.begin(), displaced.end());
   for (auto& range : across_gap_)
@@ -225,7 +225,7 @@ void TextBuffer::DidMoveInsertionPointForward() {
   across_gap_.swap(displaced);
   while (!after_gap_.empty()) {
     TextRange* range = after_gap_.top();
-    if (range->begin() >= gap_begin_)
+    if (range->start() >= gap_start_)
       break;
     after_gap_.pop();
     displaced.push_back(range);
@@ -238,7 +238,7 @@ void TextBuffer::DidMoveInsertionPointBackward() {
   across_gap_.swap(displaced);
   while (!before_gap_.empty()) {
     TextRange* range = before_gap_.top();
-    if (range->end() <= gap_begin_)
+    if (range->end() <= gap_start_)
       break;
     before_gap_.pop();
     displaced.push_back(range);

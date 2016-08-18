@@ -156,7 +156,7 @@ size_t Editor::GetMaxCursorColumn() const {
 }
 
 size_t Editor::GetCurrentTextPosition() {
-  return GetCurrentLine()->begin() + cursor_col_;
+  return GetCurrentLine()->start() + cursor_col_;
 }
 
 void Editor::SetCursorColumn(size_t column) {

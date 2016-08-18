@@ -240,7 +240,7 @@ TEST(TextBuffer, AddRange) {
   EXPECT_TRUE(world.is_dirty());
   world.MarkClean();
   EXPECT_EQ("Hello", buffer.GetTextForRange(&hello).ToString());
-  EXPECT_EQ(7u, world.begin());
+  EXPECT_EQ(7u, world.start());
   EXPECT_EQ(7u, world.end());
   EXPECT_EQ("", buffer.GetTextForRange(&world).ToString());
 
@@ -294,7 +294,7 @@ TEST(TextBuffer, AddRange) {
   EXPECT_TRUE(hello.is_dirty());
   hello.MarkClean();
   EXPECT_FALSE(world.is_dirty());
-  EXPECT_EQ(0u, hello.begin());
+  EXPECT_EQ(0u, hello.start());
   EXPECT_EQ(0u, hello.end());
   EXPECT_EQ("", buffer.GetTextForRange(&hello).ToString());
   EXPECT_EQ("", buffer.GetTextForRange(&world).ToString());
@@ -302,7 +302,7 @@ TEST(TextBuffer, AddRange) {
   buffer.DeleteCharacterAfter(0);
   EXPECT_FALSE(hello.is_dirty());
   EXPECT_FALSE(world.is_dirty());
-  EXPECT_EQ(0u, hello.begin());
+  EXPECT_EQ(0u, hello.start());
   EXPECT_EQ(0u, hello.end());
   EXPECT_EQ("", buffer.GetTextForRange(&hello).ToString());
   EXPECT_EQ("", buffer.GetTextForRange(&world).ToString());

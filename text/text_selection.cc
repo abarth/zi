@@ -28,7 +28,7 @@ TextSelection::TextSelection(size_t base_offset,
       affinity_(affinity) {}
 
 TextSelection::TextSelection(const TextRange& range, TextAffinity affinity)
-    : TextSelection(range.begin(), range.end(), affinity) {}
+    : TextSelection(range.start(), range.end(), affinity) {}
 
 TextSelection::~TextSelection() = default;
 

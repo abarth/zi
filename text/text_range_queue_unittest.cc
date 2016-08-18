@@ -22,7 +22,7 @@ namespace zi {
 namespace {
 
 TEST(TextRangeQueue, Control) {
-  TextRangeQueue<TextRange::DescendingByBegin> queue;
+  TextRangeQueue<TextRange::DescendingByStart> queue;
   TextRange a(1, 10);
   TextRange b(2, 9);
   TextRange c(3, 11);
@@ -30,27 +30,27 @@ TEST(TextRangeQueue, Control) {
   queue.push(&a);
   queue.push(&b);
   queue.push(&c);
-  EXPECT_EQ(1u, queue.top()->begin());
+  EXPECT_EQ(1u, queue.top()->start());
 
   queue.ShiftForward(5);
-  EXPECT_EQ(6u, queue.top()->begin());
-  EXPECT_EQ(6u, a.begin());
+  EXPECT_EQ(6u, queue.top()->start());
+  EXPECT_EQ(6u, a.start());
   EXPECT_EQ(15u, a.end());
-  EXPECT_EQ(7u, b.begin());
-  EXPECT_EQ(8u, c.begin());
+  EXPECT_EQ(7u, b.start());
+  EXPECT_EQ(8u, c.start());
 
   queue.ShiftBackward(3);
-  EXPECT_EQ(3u, queue.top()->begin());
-  EXPECT_EQ(3u, a.begin());
+  EXPECT_EQ(3u, queue.top()->start());
+  EXPECT_EQ(3u, a.start());
   EXPECT_EQ(12u, a.end());
-  EXPECT_EQ(4u, b.begin());
-  EXPECT_EQ(5u, c.begin());
+  EXPECT_EQ(4u, b.start());
+  EXPECT_EQ(5u, c.start());
 
   std::vector<TextRange*> doomed;
   doomed.push_back(&a);
   doomed.push_back(&c);
   queue.Erase(doomed.begin(), doomed.end());
-  EXPECT_EQ(4u, queue.top()->begin());
+  EXPECT_EQ(4u, queue.top()->start());
 }
 
 TEST(TextRangeQueue, AscendingByEnd) {
