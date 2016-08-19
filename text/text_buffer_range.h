@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 
+#include "text/text_range.h"
 #include "zen/macros.h"
 
 namespace zi {
@@ -25,6 +26,7 @@ class TextBufferRange {
  public:
   TextBufferRange();
   TextBufferRange(size_t begin, size_t end);
+  explicit TextBufferRange(const TextRange& range);
   explicit TextBufferRange(const TextSelection& selection);
   ~TextBufferRange();
 
@@ -45,15 +47,19 @@ class TextBufferRange {
   size_t start() const { return start_; }
   size_t end() const { return end_; }
 
+  TextRange range() const { return TextRange(start(), end()); }
+
   bool is_empty() const { return start_ == end_; }
   size_t length() const { return end_ - start_; }
 
   struct DescendingByStart {
-    bool operator()(const TextBufferRange* lhs, const TextBufferRange* rhs) const;
+    bool operator()(const TextBufferRange* lhs,
+                    const TextBufferRange* rhs) const;
   };
 
   struct AscendingByEnd {
-    bool operator()(const TextBufferRange* lhs, const TextBufferRange* rhs) const;
+    bool operator()(const TextBufferRange* lhs,
+                    const TextBufferRange* rhs) const;
   };
 
  private:

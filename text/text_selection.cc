@@ -14,11 +14,12 @@
 
 #include "text/text_selection.h"
 
-#include "text/text_buffer_range.h"
-
 namespace zi {
 
 TextSelection::TextSelection() = default;
+
+TextSelection::TextSelection(size_t collapsed_offset, TextAffinity affinity)
+    : TextSelection(collapsed_offset, collapsed_offset, affinity) {}
 
 TextSelection::TextSelection(size_t base_offset,
                              size_t extent_offset,
@@ -31,5 +32,15 @@ TextSelection::TextSelection(const TextRange& range, TextAffinity affinity)
     : TextSelection(range.start(), range.end(), affinity) {}
 
 TextSelection::~TextSelection() = default;
+
+void TextSelection::Shift(int delta) {
+  base_offset_ += delta;
+  extent_offset_ += delta;
+}
+
+void TextSelection::SetRange(const TextRange& range) {
+  base_offset_ = range.start();
+  extent_offset_ = range.end();
+}
 
 }  // namespace zi

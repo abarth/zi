@@ -14,24 +14,40 @@
 
 #pragma once
 
-#include <stddef.h>
+#include "editing/cursor_mode.h"
+#include "text/text_selection.h"
+#include "zen/macros.h"
 
 namespace zi {
+class TextBuffer;
 
-class TextRange {
+class CursorPosition {
  public:
-  TextRange();
-  TextRange(size_t start, size_t end);
-  ~TextRange();
+  explicit CursorPosition(TextBuffer* text);
+  ~CursorPosition();
 
-  size_t start() const { return start_; }
-  size_t end() const { return end_; }
+  bool MoveLeft();
+  bool MoveRight();
+  bool MoveUp();
+  bool MoveDown();
 
-  size_t length() const { return end_ - start_; }
+  void SetMode(CursorMode mode);
+  bool SetOffset(size_t offset);
+
+  CursorMode mode() const { return mode_; }
+  const TextSelection& selection() const { return selection_; }
+  size_t offset() const { return selection_.base_offset(); }
 
  private:
-  size_t start_ = 0;
-  size_t end_ = 0;
+  void MoveCursorTo(size_t offset);
+
+  TextBuffer* text_;
+  CursorMode mode_;
+  TextSelection selection_;
+  size_t current_column_ = 0;
+  size_t preferred_column_ = 0;
+
+  DISALLOW_COPY_AND_ASSIGN(CursorPosition);
 };
 
 }  // namespace zi

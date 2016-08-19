@@ -41,6 +41,7 @@ class TextBuffer {
 
   // Returns std::string::npos if |c| is not found.
   size_t Find(char c, size_t pos = 0u);
+  size_t RFind(char c, size_t pos = std::string::npos);
 
   bool is_empty() const { return size() == 0u; }
   size_t size() const { return buffer_.size() - gap_size(); }
@@ -48,8 +49,10 @@ class TextBuffer {
   std::string ToString() const;
   TextView GetText() const;
   TextView GetTextForRange(TextBufferRange* range) const;
+  char At(size_t offset);
 
   void AddRange(TextBufferRange* range);
+  void RemoveRange(TextBufferRange* range);
 
   template <typename Iterator>
   void AddRanges(Iterator begin, Iterator end) {
@@ -60,7 +63,7 @@ class TextBuffer {
   template <typename Iterator>
   void RemoveRanges(Iterator begin, Iterator end) {
     before_gap_.Erase(begin, end);
-    EraseAllValues(across_gap_, begin, end);
+    EraseAllValues(&across_gap_, begin, end);
     after_gap_.Erase(begin, end);
   }
 

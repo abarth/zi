@@ -25,12 +25,17 @@ namespace zi {
 class TextSelection {
  public:
   TextSelection();
+  explicit TextSelection(size_t collapsed_offset,
+                         TextAffinity affinity = TextAffinity::Downstream);
   TextSelection(size_t base_offset,
                 size_t extent_offset,
                 TextAffinity affinity = TextAffinity::Downstream);
   TextSelection(const TextRange& range,
                 TextAffinity affinity = TextAffinity::Downstream);
   ~TextSelection();
+
+  void Shift(int delta);
+  void SetRange(const TextRange& range);
 
   size_t base_offset() const { return base_offset_; }
   size_t extent_offset() const { return extent_offset_; }
@@ -44,6 +49,7 @@ class TextSelection {
   size_t start_offset() const { return std::min(base_offset_, extent_offset_); }
   size_t end_offset() const { return std::max(base_offset_, extent_offset_); }
   TextRange range() const { return TextRange(start_offset(), end_offset()); }
+  size_t length() const { return end_offset() - start_offset(); }
 
   TextPosition start() const { return TextPosition(start_offset(), affinity_); }
   TextPosition end() const { return TextPosition(end_offset(), affinity_); }

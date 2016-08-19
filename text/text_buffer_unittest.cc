@@ -25,6 +25,9 @@ namespace zi {
 namespace {
 
 TEST(TextBuffer, Find) {
+  TextBuffer empty_buffer;
+  EXPECT_EQ(std::string::npos, empty_buffer.RFind('x', 4u));
+
   std::string text = "Hello, world";
   std::vector<char> data(text.begin(), text.end());
 
@@ -33,6 +36,7 @@ TEST(TextBuffer, Find) {
   buffer.InsertCharacter(TextPosition(1), 'y');
   buffer.InsertCharacter(TextPosition(2), 'z');
 
+  EXPECT_EQ(std::string::npos, buffer.Find('q'));
   EXPECT_EQ(0u, buffer.Find('x'));
   EXPECT_EQ(1u, buffer.Find('y'));
   EXPECT_EQ(2u, buffer.Find('z'));
@@ -45,7 +49,49 @@ TEST(TextBuffer, Find) {
   EXPECT_EQ(5u, buffer.Find('l', 5));
   EXPECT_EQ(6u, buffer.Find('l', 6));
   EXPECT_EQ(13u, buffer.Find('l', 7));
+  EXPECT_EQ(13u, buffer.Find('l', 13));
+  EXPECT_EQ(std::string::npos, buffer.Find('l', 14));
+  EXPECT_EQ(std::string::npos, buffer.Find('l', 15));
+  EXPECT_EQ(std::string::npos, buffer.Find('l', 16));
+  EXPECT_EQ(std::string::npos, buffer.Find('l', 17));
   EXPECT_EQ(14u, buffer.Find('d'));
+}
+
+TEST(TextBuffer, RFind) {
+  TextBuffer empty_buffer;
+  EXPECT_EQ(std::string::npos, empty_buffer.RFind('x'));
+
+  std::string text = "Hello, world";
+  std::vector<char> data(text.begin(), text.end());
+
+  TextBuffer buffer(std::move(data));
+  buffer.InsertCharacter(TextPosition(0), 'x');
+  buffer.InsertCharacter(TextPosition(1), 'y');
+  buffer.InsertCharacter(TextPosition(2), 'z');
+
+  EXPECT_EQ(0u, buffer.RFind('x'));
+  EXPECT_EQ(1u, buffer.RFind('y'));
+  EXPECT_EQ(2u, buffer.RFind('z'));
+  EXPECT_EQ(3u, buffer.RFind('H'));
+  EXPECT_EQ(std::string::npos, buffer.RFind('l', 0));
+  EXPECT_EQ(std::string::npos, buffer.RFind('l', 1));
+  EXPECT_EQ(std::string::npos, buffer.RFind('l', 2));
+  EXPECT_EQ(std::string::npos, buffer.RFind('l', 3));
+  EXPECT_EQ(std::string::npos, buffer.RFind('l', 4));
+  EXPECT_EQ(5u, buffer.RFind('l', 5));
+  EXPECT_EQ(6u, buffer.RFind('l', 6));
+  EXPECT_EQ(6u, buffer.RFind('l', 7));
+  EXPECT_EQ(6u, buffer.RFind('l', 8));
+  EXPECT_EQ(6u, buffer.RFind('l', 9));
+  EXPECT_EQ(6u, buffer.RFind('l', 10));
+  EXPECT_EQ(6u, buffer.RFind('l', 11));
+  EXPECT_EQ(6u, buffer.RFind('l', 12));
+  EXPECT_EQ(13u, buffer.RFind('l', 13));
+  EXPECT_EQ(13u, buffer.RFind('l', 14));
+  EXPECT_EQ(13u, buffer.RFind('l', 15));
+  EXPECT_EQ(13u, buffer.RFind('l', 16));
+  EXPECT_EQ(13u, buffer.RFind('l', 17));
+  EXPECT_EQ(14u, buffer.RFind('d'));
 }
 
 TEST(TextBuffer, Insert) {

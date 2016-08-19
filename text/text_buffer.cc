@@ -113,6 +113,20 @@ size_t TextBuffer::Find(char c, size_t pos) {
   return std::string::npos;
 }
 
+size_t TextBuffer::RFind(char c, size_t pos) {
+  if (is_empty())
+    return std::string::npos;
+  pos = std::min(pos, size() - 1);
+  for (size_t i = 0; i <= pos; ++i) {
+    size_t probe = pos - i;
+    // TODO(abarth): Factor this loop so we don't have to test against gap_start
+    // in each iteration.
+    if (At(probe) == c)
+      return probe;
+  }
+  return std::string::npos;
+}
+
 std::string TextBuffer::ToString() const {
   std::string result;
   result.resize(size());
@@ -153,6 +167,12 @@ TextView TextBuffer::GetTextForRange(TextBufferRange* range) const {
   }
 }
 
+char TextBuffer::At(size_t offset) {
+  if (offset >= gap_start_)
+    offset += gap_size();
+  return buffer_[offset];
+}
+
 void TextBuffer::AddRange(TextBufferRange* range) {
   if (range->end() <= gap_start_)
     before_gap_.push(range);
@@ -162,9 +182,14 @@ void TextBuffer::AddRange(TextBufferRange* range) {
     across_gap_.push_back(range);
 }
 
+void TextBuffer::RemoveRange(TextBufferRange* range) {
+  RemoveRanges(&range, &range);
+}
+
 #ifndef NDEBUG
 
-static void DebugDumpTextBufferRangeVector(const std::vector<TextBufferRange*>& ranges) {
+static void DebugDumpTextBufferRangeVector(
+    const std::vector<TextBufferRange*>& ranges) {
   for (auto& range : ranges) {
     std::cout << "begin=" << range->start() << " end=" << range->end()
               << std::endl;

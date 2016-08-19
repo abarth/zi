@@ -15,6 +15,8 @@
 source_set("editing") {
   sources = [
     "cursor_mode.h",
+    "cursor_position.cc",
+    "cursor_position.h",
     "editor.cc",
     "editor.h",
     "line_tracker.cc",

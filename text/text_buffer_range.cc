@@ -22,7 +22,11 @@ namespace zi {
 
 TextBufferRange::TextBufferRange() = default;
 
-TextBufferRange::TextBufferRange(size_t start, size_t end) : start_(start), end_(end) {}
+TextBufferRange::TextBufferRange(size_t start, size_t end)
+    : start_(start), end_(end) {}
+
+TextBufferRange::TextBufferRange(const TextRange& range)
+    : TextBufferRange(range.start(), range.end()) {}
 
 TextBufferRange::TextBufferRange(const TextSelection& selection)
     : TextBufferRange(selection.start_offset(), selection.end_offset()) {}
@@ -84,13 +88,15 @@ void TextBufferRange::ShiftBackward(size_t count) {
   end_ -= delta;
 }
 
-bool TextBufferRange::DescendingByStart::operator()(const TextBufferRange* lhs,
-                                              const TextBufferRange* rhs) const {
+bool TextBufferRange::DescendingByStart::operator()(
+    const TextBufferRange* lhs,
+    const TextBufferRange* rhs) const {
   return lhs->start() > rhs->start();
 }
 
-bool TextBufferRange::AscendingByEnd::operator()(const TextBufferRange* lhs,
-                                           const TextBufferRange* rhs) const {
+bool TextBufferRange::AscendingByEnd::operator()(
+    const TextBufferRange* lhs,
+    const TextBufferRange* rhs) const {
   return lhs->end() < rhs->end();
 }
 
