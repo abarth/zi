@@ -12,24 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "text/text_selection.h"
-
-#include "text/text_buffer_range.h"
+#include "text/text_range.h"
 
 namespace zi {
 
-TextSelection::TextSelection() = default;
+TextRange::TextRange() = default;
 
-TextSelection::TextSelection(size_t base_offset,
-                             size_t extent_offset,
-                             TextAffinity affinity)
-    : base_offset_(base_offset),
-      extent_offset_(extent_offset),
-      affinity_(affinity) {}
+TextRange::TextRange(size_t start, size_t end) : start_(start), end_(end) {}
 
-TextSelection::TextSelection(const TextRange& range, TextAffinity affinity)
-    : TextSelection(range.start(), range.end(), affinity) {}
-
-TextSelection::~TextSelection() = default;
+TextRange::~TextRange() = default;
 
 }  // namespace zi

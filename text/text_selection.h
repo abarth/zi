@@ -18,9 +18,9 @@
 
 #include "text/text_affinity.h"
 #include "text/text_position.h"
+#include "text/text_range.h"
 
 namespace zi {
-class TextBufferRange;
 
 class TextSelection {
  public:
@@ -28,7 +28,7 @@ class TextSelection {
   TextSelection(size_t base_offset,
                 size_t extent_offset,
                 TextAffinity affinity = TextAffinity::Downstream);
-  TextSelection(const TextBufferRange& range,
+  TextSelection(const TextRange& range,
                 TextAffinity affinity = TextAffinity::Downstream);
   ~TextSelection();
 
@@ -43,6 +43,7 @@ class TextSelection {
 
   size_t start_offset() const { return std::min(base_offset_, extent_offset_); }
   size_t end_offset() const { return std::max(base_offset_, extent_offset_); }
+  TextRange range() const { return TextRange(start_offset(), end_offset()); }
 
   TextPosition start() const { return TextPosition(start_offset(), affinity_); }
   TextPosition end() const { return TextPosition(end_offset(), affinity_); }
