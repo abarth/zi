@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "text/text_range.h"
+#include "text/text_buffer_range.h"
 
 #include <algorithm>
 
@@ -20,24 +20,24 @@
 
 namespace zi {
 
-TextRange::TextRange() = default;
+TextBufferRange::TextBufferRange() = default;
 
-TextRange::TextRange(size_t start, size_t end) : start_(start), end_(end) {}
+TextBufferRange::TextBufferRange(size_t start, size_t end) : start_(start), end_(end) {}
 
-TextRange::TextRange(const TextSelection& selection)
-    : TextRange(selection.start_offset(), selection.end_offset()) {}
+TextBufferRange::TextBufferRange(const TextSelection& selection)
+    : TextBufferRange(selection.start_offset(), selection.end_offset()) {}
 
-TextRange::~TextRange() = default;
+TextBufferRange::~TextBufferRange() = default;
 
-void TextRange::MarkDirty() {
+void TextBufferRange::MarkDirty() {
   is_dirty_ = true;
 }
 
-void TextRange::MarkClean() {
+void TextBufferRange::MarkClean() {
   is_dirty_ = false;
 }
 
-void TextRange::PushFront(size_t count) {
+void TextBufferRange::PushFront(size_t count) {
   const size_t delta = std::min(count, start_);
   if (!delta)
     return;
@@ -45,14 +45,14 @@ void TextRange::PushFront(size_t count) {
   MarkDirty();
 }
 
-void TextRange::PushBack(size_t count) {
+void TextBufferRange::PushBack(size_t count) {
   if (!count)
     return;
   end_ += count;
   MarkDirty();
 }
 
-void TextRange::PopFront(size_t count) {
+void TextBufferRange::PopFront(size_t count) {
   if (!count)
     return;
   const bool was_empty = is_empty();
@@ -62,7 +62,7 @@ void TextRange::PopFront(size_t count) {
     MarkDirty();
 }
 
-void TextRange::PopBack(size_t count) {
+void TextBufferRange::PopBack(size_t count) {
   const size_t delta = std::min(count, end_);
   if (!delta)
     return;
@@ -73,24 +73,24 @@ void TextRange::PopBack(size_t count) {
     MarkDirty();
 }
 
-void TextRange::ShiftForward(size_t count) {
+void TextBufferRange::ShiftForward(size_t count) {
   start_ += count;
   end_ += count;
 }
 
-void TextRange::ShiftBackward(size_t count) {
+void TextBufferRange::ShiftBackward(size_t count) {
   const size_t delta = std::min(count, start_);
   start_ -= delta;
   end_ -= delta;
 }
 
-bool TextRange::DescendingByStart::operator()(const TextRange* lhs,
-                                              const TextRange* rhs) const {
+bool TextBufferRange::DescendingByStart::operator()(const TextBufferRange* lhs,
+                                              const TextBufferRange* rhs) const {
   return lhs->start() > rhs->start();
 }
 
-bool TextRange::AscendingByEnd::operator()(const TextRange* lhs,
-                                           const TextRange* rhs) const {
+bool TextBufferRange::AscendingByEnd::operator()(const TextBufferRange* lhs,
+                                           const TextBufferRange* rhs) const {
   return lhs->end() < rhs->end();
 }
 

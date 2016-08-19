@@ -14,7 +14,7 @@
 
 #include "text/text_selection.h"
 
-#include "text/text_range.h"
+#include "text/text_buffer_range.h"
 
 namespace zi {
 
@@ -27,7 +27,7 @@ TextSelection::TextSelection(size_t base_offset,
       extent_offset_(extent_offset),
       affinity_(affinity) {}
 
-TextSelection::TextSelection(const TextRange& range, TextAffinity affinity)
+TextSelection::TextSelection(const TextBufferRange& range, TextAffinity affinity)
     : TextSelection(range.start(), range.end(), affinity) {}
 
 TextSelection::~TextSelection() = default;

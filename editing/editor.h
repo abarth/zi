@@ -22,7 +22,7 @@
 #include "terminal/command_buffer.h"
 #include "text/text_buffer.h"
 #include "text/text_position.h"
-#include "text/text_range.h"
+#include "text/text_buffer_range.h"
 #include "zen/macros.h"
 
 namespace zi {
@@ -57,7 +57,7 @@ class Editor {
   bool MoveCursorRight();
 
  private:
-  TextRange* GetCurrentLine() const;
+  TextBufferRange* GetCurrentLine() const;
   size_t GetMaxCursorColumn() const;
   void EnsureCursorVisible();
   TextPosition GetCurrentTextPosition();

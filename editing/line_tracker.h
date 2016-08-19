@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "text/text_buffer.h"
-#include "text/text_range.h"
+#include "text/text_buffer_range.h"
 #include "zen/macros.h"
 
 namespace zi {
@@ -30,12 +30,12 @@ class LineTracker {
 
   void Clear();
   void UpdateLines(TextBuffer* text);
-  TextRange* GetLine(size_t line_index) const;
+  TextBufferRange* GetLine(size_t line_index) const;
 
   size_t size() const { return lines_.size(); }
 
  private:
-  std::vector<std::unique_ptr<TextRange>> lines_;
+  std::vector<std::unique_ptr<TextBufferRange>> lines_;
 
   DISALLOW_COPY_AND_ASSIGN(LineTracker);
 };

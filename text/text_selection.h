@@ -20,7 +20,7 @@
 #include "text/text_position.h"
 
 namespace zi {
-class TextRange;
+class TextBufferRange;
 
 class TextSelection {
  public:
@@ -28,7 +28,7 @@ class TextSelection {
   TextSelection(size_t base_offset,
                 size_t extent_offset,
                 TextAffinity affinity = TextAffinity::Downstream);
-  TextSelection(const TextRange& range,
+  TextSelection(const TextBufferRange& range,
                 TextAffinity affinity = TextAffinity::Downstream);
   ~TextSelection();
 

@@ -18,8 +18,8 @@
 #include <vector>
 
 #include "text/text_position.h"
-#include "text/text_range_queue.h"
-#include "text/text_range.h"
+#include "text/text_buffer_range_queue.h"
+#include "text/text_buffer_range.h"
 #include "text/text_view.h"
 #include "zen/macros.h"
 #include "zen/string_view.h"
@@ -37,7 +37,7 @@ class TextBuffer {
   void InsertText(const TextPosition& position, StringView text);
   void InsertText(const TextPosition& position, const std::string& text);
   void DeleteCharacterAfter(size_t position);
-  void DeleteRange(const TextRange& range);
+  void DeleteRange(const TextBufferRange& range);
 
   // Returns std::string::npos if |c| is not found.
   size_t Find(char c, size_t pos = 0u);
@@ -47,9 +47,9 @@ class TextBuffer {
 
   std::string ToString() const;
   TextView GetText() const;
-  TextView GetTextForRange(TextRange* range) const;
+  TextView GetTextForRange(TextBufferRange* range) const;
 
-  void AddRange(TextRange* range);
+  void AddRange(TextBufferRange* range);
 
   template <typename Iterator>
   void AddRanges(Iterator begin, Iterator end) {
@@ -87,9 +87,9 @@ class TextBuffer {
   size_t gap_end_ = 0;
   std::vector<char> buffer_;
 
-  TextRangeQueue<TextRange::AscendingByEnd> before_gap_;
-  std::vector<TextRange*> across_gap_;
-  TextRangeQueue<TextRange::DescendingByStart> after_gap_;
+  TextBufferRangeQueue<TextBufferRange::AscendingByEnd> before_gap_;
+  std::vector<TextBufferRange*> across_gap_;
+  TextBufferRangeQueue<TextBufferRange::DescendingByStart> after_gap_;
 
   DISALLOW_COPY_AND_ASSIGN(TextBuffer);
 };

@@ -36,7 +36,7 @@ void TextBuffer::InsertCharacter(const TextPosition& position, char c) {
     Expand(1);
   MoveInsertionPointTo(position.offset());
   buffer_[gap_start_++] = c;
-  // TODO(abarth): Consider the affinity when adjusting the TextRanges.
+  // TODO(abarth): Consider the affinity when adjusting the TextBufferRanges.
   DidInsert(1);
 }
 
@@ -47,7 +47,7 @@ void TextBuffer::InsertText(const TextPosition& position, StringView text) {
   MoveInsertionPointTo(position.offset());
   memcpy(&buffer_[gap_start_], text.data(), length);
   gap_start_ += length;
-  // TODO(abarth): Consider the affinity when adjusting the TextRanges.
+  // TODO(abarth): Consider the affinity when adjusting the TextBufferRanges.
   DidInsert(length);
 }
 
@@ -57,10 +57,10 @@ void TextBuffer::InsertText(const TextPosition& position,
 }
 
 void TextBuffer::DeleteCharacterAfter(size_t position) {
-  DeleteRange(TextRange(position, position + 1));
+  DeleteRange(TextBufferRange(position, position + 1));
 }
 
-void TextBuffer::DeleteRange(const TextRange& range) {
+void TextBuffer::DeleteRange(const TextBufferRange& range) {
   const size_t size = this->size();
   const size_t begin = std::min(range.start(), size);
   const size_t end = std::min(range.end(), size);
@@ -131,7 +131,7 @@ TextView TextBuffer::GetText() const {
                   StringView(data + gap_end_, data + buffer_.size()));
 }
 
-TextView TextBuffer::GetTextForRange(TextRange* range) const {
+TextView TextBuffer::GetTextForRange(TextBufferRange* range) const {
   if (range->end() <= gap_start_) {
     const char* begin = &buffer_[range->start()];
     return TextView(StringView(begin, begin + range->length()));
@@ -153,7 +153,7 @@ TextView TextBuffer::GetTextForRange(TextRange* range) const {
   }
 }
 
-void TextBuffer::AddRange(TextRange* range) {
+void TextBuffer::AddRange(TextBufferRange* range) {
   if (range->end() <= gap_start_)
     before_gap_.push(range);
   else if (range->start() >= gap_start_)
@@ -164,7 +164,7 @@ void TextBuffer::AddRange(TextRange* range) {
 
 #ifndef NDEBUG
 
-static void DebugDumpTextRangeVector(const std::vector<TextRange*>& ranges) {
+static void DebugDumpTextBufferRangeVector(const std::vector<TextBufferRange*>& ranges) {
   for (auto& range : ranges) {
     std::cout << "begin=" << range->start() << " end=" << range->end()
               << std::endl;
@@ -175,11 +175,11 @@ void TextBuffer::DebugDumpRanges() {
   std::cout << "gap_begin=" << gap_start_ << " gap_end=" << gap_end_
             << " size=" << buffer_.size() << std::endl;
   std::cout << "== Before gap ==" << std::endl;
-  DebugDumpTextRangeVector(before_gap_.debug_container());
+  DebugDumpTextBufferRangeVector(before_gap_.debug_container());
   std::cout << "== Across gap ==" << std::endl;
-  DebugDumpTextRangeVector(across_gap_);
+  DebugDumpTextBufferRangeVector(across_gap_);
   std::cout << "== After gap ==" << std::endl;
-  DebugDumpTextRangeVector(after_gap_.debug_container());
+  DebugDumpTextBufferRangeVector(after_gap_.debug_container());
 }
 
 #endif
@@ -208,9 +208,9 @@ void TextBuffer::DidInsert(size_t count) {
 }
 
 void TextBuffer::DidDelete(size_t count) {
-  std::vector<TextRange*> displaced;
+  std::vector<TextBufferRange*> displaced;
   while (!before_gap_.empty()) {
-    TextRange* range = before_gap_.top();
+    TextBufferRange* range = before_gap_.top();
     if (range->end() <= gap_start_)
       break;
     before_gap_.pop();
@@ -224,10 +224,10 @@ void TextBuffer::DidDelete(size_t count) {
 }
 
 void TextBuffer::DidMoveInsertionPointForward() {
-  std::vector<TextRange*> displaced;
+  std::vector<TextBufferRange*> displaced;
   across_gap_.swap(displaced);
   while (!after_gap_.empty()) {
-    TextRange* range = after_gap_.top();
+    TextBufferRange* range = after_gap_.top();
     if (range->start() >= gap_start_)
       break;
     after_gap_.pop();
@@ -237,10 +237,10 @@ void TextBuffer::DidMoveInsertionPointForward() {
 }
 
 void TextBuffer::DidMoveInsertionPointBackward() {
-  std::vector<TextRange*> displaced;
+  std::vector<TextBufferRange*> displaced;
   across_gap_.swap(displaced);
   while (!before_gap_.empty()) {
-    TextRange* range = before_gap_.top();
+    TextBufferRange* range = before_gap_.top();
     if (range->end() <= gap_start_)
       break;
     before_gap_.pop();

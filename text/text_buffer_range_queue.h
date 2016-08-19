@@ -17,14 +17,14 @@
 #include <queue>
 #include <vector>
 
-#include "text/text_range.h"
+#include "text/text_buffer_range.h"
 #include "zen/vector_extensions.h"
 
 namespace zi {
 
 template <class Compare>
-class TextRangeQueue
-    : public std::priority_queue<TextRange*, std::vector<TextRange*>, Compare> {
+class TextBufferRangeQueue
+    : public std::priority_queue<TextBufferRange*, std::vector<TextBufferRange*>, Compare> {
  public:
   void ShiftForward(size_t count) {
     for (auto& value : this->c)
@@ -43,7 +43,7 @@ class TextRangeQueue
   }
 
 #ifndef NDEBUG
-  const std::vector<TextRange*>& debug_container() const { return this->c; }
+  const std::vector<TextBufferRange*>& debug_container() const { return this->c; }
 #endif
 };
 

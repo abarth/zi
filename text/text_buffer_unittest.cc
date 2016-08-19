@@ -83,7 +83,7 @@ TEST(TextBuffer, Range) {
 
   auto check = [&buffer](size_t begin, size_t end, std::string left,
                          std::string right) {
-    TextRange range(begin, end);
+    TextBufferRange range(begin, end);
     auto pair = buffer.GetTextForRange(&range);
     EXPECT_EQ(left, pair.left().ToString());
     EXPECT_EQ(right, pair.right().ToString());
@@ -114,17 +114,17 @@ TEST(TextBuffer, DeleteRange) {
   std::string text = "Hello, world";
   std::vector<char> data(text.begin(), text.end());
   TextBuffer buffer(std::move(data));
-  buffer.DeleteRange(TextRange(4, 4));
+  buffer.DeleteRange(TextBufferRange(4, 4));
   EXPECT_EQ(text, buffer.ToString());
-  buffer.DeleteRange(TextRange(2, 4));
+  buffer.DeleteRange(TextBufferRange(2, 4));
   EXPECT_EQ("Heo, world", buffer.ToString());
-  buffer.DeleteRange(TextRange(8, 12));
+  buffer.DeleteRange(TextBufferRange(8, 12));
   EXPECT_EQ("Heo, wor", buffer.ToString());
-  buffer.DeleteRange(TextRange(9, 12));
+  buffer.DeleteRange(TextBufferRange(9, 12));
   EXPECT_EQ("Heo, wor", buffer.ToString());
-  buffer.DeleteRange(TextRange(0, 7));
+  buffer.DeleteRange(TextBufferRange(0, 7));
   EXPECT_EQ("r", buffer.ToString());
-  buffer.DeleteRange(TextRange(0, 2));
+  buffer.DeleteRange(TextBufferRange(0, 2));
   EXPECT_EQ("", buffer.ToString());
 }
 
@@ -133,8 +133,8 @@ TEST(TextBuffer, AddRange) {
   std::vector<char> data(text.begin(), text.end());
   TextBuffer buffer(std::move(data));
 
-  TextRange hello(0, 5);
-  TextRange world(7, 12);
+  TextBufferRange hello(0, 5);
+  TextBufferRange world(7, 12);
 
   EXPECT_EQ("Hello", buffer.GetTextForRange(&hello).ToString());
   EXPECT_EQ("world", buffer.GetTextForRange(&world).ToString());

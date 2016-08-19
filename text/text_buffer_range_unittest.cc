@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "text/text_range.h"
+#include "text/text_buffer_range.h"
 
 #include <string>
 
@@ -21,8 +21,8 @@
 namespace zi {
 namespace {
 
-TEST(TextRange, Default) {
-  TextRange range;
+TEST(TextBufferRange, Default) {
+  TextBufferRange range;
   EXPECT_TRUE(range.is_empty());
   EXPECT_EQ(0u, range.start());
   EXPECT_EQ(0u, range.end());
@@ -30,8 +30,8 @@ TEST(TextRange, Default) {
   EXPECT_FALSE(range.is_dirty());
 }
 
-TEST(TextRange, Control) {
-  TextRange range(4, 7);
+TEST(TextBufferRange, Control) {
+  TextBufferRange range(4, 7);
   EXPECT_FALSE(range.is_empty());
   EXPECT_EQ(4u, range.start());
   EXPECT_EQ(7u, range.end());

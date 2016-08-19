@@ -21,12 +21,12 @@
 namespace zi {
 class TextSelection;
 
-class TextRange {
+class TextBufferRange {
  public:
-  TextRange();
-  TextRange(size_t begin, size_t end);
-  explicit TextRange(const TextSelection& selection);
-  ~TextRange();
+  TextBufferRange();
+  TextBufferRange(size_t begin, size_t end);
+  explicit TextBufferRange(const TextSelection& selection);
+  ~TextBufferRange();
 
   void MarkDirty();
   void MarkClean();
@@ -49,11 +49,11 @@ class TextRange {
   size_t length() const { return end_ - start_; }
 
   struct DescendingByStart {
-    bool operator()(const TextRange* lhs, const TextRange* rhs) const;
+    bool operator()(const TextBufferRange* lhs, const TextBufferRange* rhs) const;
   };
 
   struct AscendingByEnd {
-    bool operator()(const TextRange* lhs, const TextRange* rhs) const;
+    bool operator()(const TextBufferRange* lhs, const TextBufferRange* rhs) const;
   };
 
  private:
@@ -61,7 +61,7 @@ class TextRange {
   size_t start_ = 0;
   size_t end_ = 0;
 
-  DISALLOW_COPY_AND_ASSIGN(TextRange);
+  DISALLOW_COPY_AND_ASSIGN(TextBufferRange);
 };
 
 }  // namespace zi

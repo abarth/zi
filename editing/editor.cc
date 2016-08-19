@@ -88,7 +88,7 @@ bool Editor::Backspace() {
       --cursor_row_;
       SetCursorColumn(GetMaxCursorColumn());
     }
-    text_->DeleteRange(TextRange(position - 1, position));
+    text_->DeleteRange(TextBufferRange(position - 1, position));
     return true;
   }
   return false;
@@ -144,7 +144,7 @@ void Editor::EnsureCursorVisible() {
     ScrollTo(cursor_row_ - height_ + 1);
 }
 
-TextRange* Editor::GetCurrentLine() const {
+TextBufferRange* Editor::GetCurrentLine() const {
   return lines_.GetLine(cursor_row_);
 }
 
